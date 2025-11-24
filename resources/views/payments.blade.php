@@ -1,70 +1,227 @@
 @extends('layouts.app')
 
-@section('title', 'Payments')
+@section('title', 'Payment - CafeIn')
 
 @section('content')
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
-            <h2 class="text-2xl font-semibold text-gray-900 mb-6">Payments</h2>
-
-            @php
-                $payments = [
-                    [
-                        'id' => 1,
-                        'order_id' => 1,
-                        'method' => 'qris',
-                        'transaction_id' => 'TX123456789',
-                        'amount' => 55000,
-                        'status' => 'pending',
-                        'created_at' => '2023-09-15 11:00',
-                    ],
-                    [
-                        'id' => 2,
-                        'order_id' => 2,
-                        'method' => 'gopay',
-                        'transaction_id' => 'TX987654321',
-                        'amount' => 20000,
-                        'status' => 'success',
-                        'created_at' => '2023-09-14 16:00',
-                    ],
-                ];
-            @endphp
-
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr>
-                        <th class="border-b p-2">Payment ID</th>
-                        <th class="border-b p-2">Order ID</th>
-                        <th class="border-b p-2">Method</th>
-                        <th class="border-b p-2">Transaction ID</th>
-                        <th class="border-b p-2">Amount (Rp)</th>
-                        <th class="border-b p-2">Status</th>
-                        <th class="border-b p-2">Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($payments as $payment)
-                        <tr>
-                            <td class="border-b p-2">{{ $payment['id'] }}</td>
-                            <td class="border-b p-2">{{ $payment['order_id'] }}</td>
-                            <td class="border-b p-2 capitalize">{{ $payment['method'] }}</td>
-                            <td class="border-b p-2">{{ $payment['transaction_id'] }}</td>
-                            <td class="border-b p-2">{{ number_format($payment['amount'], 0, ',', '.') }}</td>
-                            <td class="border-b p-2">
-                                <span
-                                    class="px-3 py-1 rounded-full text-sm font-semibold
-                            @if ($payment['status'] === 'pending') bg-yellow-200 text-yellow-800
-                            @elseif($payment['status'] === 'success') bg-green-200 text-green-800
-                            @elseif($payment['status'] === 'failed') bg-red-200 text-red-800
-                            @else bg-gray-200 text-gray-800 @endif">
-                                    {{ ucfirst($payment['status']) }}
-                                </span>
-                            </td>
-                            <td class="border-b p-2">{{ $payment['created_at'] }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+    <div class="page-header">
+        <div class="container">
+            <h1>Payment</h1>
+            <p>Complete your order</p>
         </div>
     </div>
+
+    <section class="payment-section">
+        <div class="container">
+            <div class="payment-layout">
+                @php $role = auth()->user()->role?->name ?? null; @endphp
+                @if(in_array($role, ['Kasir','Admin']) && empty($order))
+                    <div class="dashboard-panel" style="margin-bottom:16px;">
+                        <div class="panel-header">
+                            <h2>Pilih Order untuk Diproses</h2>
+                            <span>{{ isset($pendingOrders) ? $pendingOrders->count() : 0 }} antrian</span>
+                        </div>
+                        <ul class="panel-list">
+                            @forelse(($pendingOrders ?? collect()) as $po)
+                                <li>
+                                    <div>
+                                        <strong>#{{ $po->order_number }}</strong>
+                                        <p>{{ $po->user?->name ?? 'Guest' }} &middot; {{ $po->created_at->format('d M Y H:i') }}</p>
+                                    </div>
+                                    <div class="panel-meta">
+                                        <span class="price">Rp {{ number_format((float) $po->total_price, 0, ',', '.') }}</span>
+                                        <a href="{{ url('/payments?order_id='.$po->id) }}" class="btn-secondary">Proses</a>
+                                    </div>
+                                </li>
+                            @empty
+                                <li class="empty-state">Tidak ada order pending/processing.</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                @endif
+                <!-- Payment Form -->
+                <div class="payment-form-container">
+                    <div class="payment-card">
+                        <h2>Payment Method</h2>
+
+                        <!-- Payment Methods -->
+                        <div class="payment-methods">
+                            @foreach($paymentMethods as $method)
+                                <div class="payment-method {{ $loop->first ? 'active' : '' }}">
+                                    <input type="radio" name="payment" id="method-{{ $method['key'] }}" value="{{ $method['key'] }}" {{ $loop->first ? 'checked' : '' }}>
+                                    <label for="method-{{ $method['key'] }}">
+                                        <span class="method-icon" aria-hidden="true">
+                                            @switch($method['key'])
+                                                @case('qris')
+                                                    <svg viewBox="0 0 24 24">
+                                                        <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                                                        <rect x="7" y="7" width="4" height="4"></rect>
+                                                        <rect x="13" y="7" width="4" height="4"></rect>
+                                                        <rect x="7" y="13" width="4" height="4"></rect>
+                                                        <path d="M13 13h4v4h-2"></path>
+                                                    </svg>
+                                                    @break
+                                                @case('gopay')
+                                                    <svg viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="8"></circle>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                    @break
+                                                @case('ovo')
+                                                    <svg viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="8"></circle>
+                                                        <circle cx="12" cy="12" r="5.5"></circle>
+                                                    </svg>
+                                                    @break
+                                                @case('cash')
+                                                    <svg viewBox="0 0 24 24">
+                                                        <rect x="4" y="7" width="16" height="10" rx="2"></rect>
+                                                        <line x1="4" y1="11" x2="20" y2="11"></line>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                    @break
+                                                @default
+                                                    <svg viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="8"></circle>
+                                                    </svg>
+                                            @endswitch
+                                        </span>
+                                        <div class="method-info">
+                                            <strong>{{ $method['label'] }}</strong>
+                                            <span>{{ $method['description'] }}</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @if($order)
+                            @php $isPaymentCompleted = in_array($order->status, ['paid', 'completed']); @endphp
+                            <!-- Delivery Information -->
+                            <div class="delivery-info">
+                                <h3>Order Information</h3>
+                                <div class="delivery-form">
+                                    <div class="form-group">
+                                        <label>Order Number</label>
+                                        <input type="text" value="{{ $order->order_number }}" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Status</label>
+                                        <input type="text" value="{{ ucfirst($order->status) }}" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Customer</label>
+                                        @if(in_array($role, ['Kasir','Admin']))
+                                            <div style="display:flex; gap:8px; align-items:center;">
+                                                <input type="text" id="cf-customer-name" value="{{ $order->metadata['customer_name'] ?? ($order->user?->name ?? 'Guest') }}" placeholder="Nama Customer" style="flex:1;">
+                                                <small id="cf-customer-status" class="stat-helper" aria-live="polite"></small>
+                                            </div>
+                                        @else
+                                            <input type="text" value="{{ $order->user?->name ?? 'Guest' }}" readonly>
+                                        @endif
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Notes</label>
+                                        @if(in_array($role, ['Kasir','Admin']))
+                                            <div style="display:flex; gap:8px; align-items:center;">
+                                                <textarea rows="3" id="cf-notes" placeholder="Catatan untuk pesanan" style="flex:1;">{{ $order->metadata['notes'] ?? ($order->metadata['note'] ?? '') }}</textarea>
+                                                <small id="cf-notes-status" class="stat-helper" aria-live="polite"></small>
+                                            </div>
+                                        @else
+                                            <textarea rows="3" readonly>{{ $order->metadata['notes'] ?? ($order->metadata['note'] ?? '-') }}</textarea>
+                                        @endif
+                                    </div>
+                                </div>
+                                @if(in_array($role, ['Kasir','Admin']))
+                                    <div class="page-actions" style="margin-top:8px;">
+                                        <button type="button" id="btn-save-order-info" class="btn-secondary">Simpan Info</button>
+                                    </div>
+                                @endif
+                            </div>
+                            @if($isPaymentCompleted)
+                                <p class="summary-note" role="status">Pembayaran untuk pesanan ini sudah tercatat.</p>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary-container">
+                    <div class="order-summary-card">
+                        <h2>Order Summary</h2>
+
+                        @if($order)
+
+                            <div class="summary-items">
+                                @foreach($order->orderItems as $item)
+                                    <div class="summary-item">
+                                        <div class="item-details">
+                                            <span class="item-name">{{ $item->menu->name }}</span>
+                                            <span class="item-qty">× {{ $item->quantity }}</span>
+                                        </div>
+                                        <span class="item-price">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="summary-divider"></div>
+
+                            <div class="summary-calculations">
+                                <div class="calc-row">
+                                    <span>Subtotal</span>
+                                    <span>Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                                </div>
+                                @if($serviceFee > 0)
+                                    <div class="calc-row">
+                                        <span>Service Fee</span>
+                                        <span>Rp {{ number_format($serviceFee, 0, ',', '.') }}</span>
+                                    </div>
+                                @endif
+                                <div class="calc-row">
+                                    <span>Currency</span>
+                                    <span>{{ $order->currency }}</span>
+                                </div>
+                                @if($latestPayment)
+                                    <div class="calc-row">
+                                        <span>Last Payment</span>
+                                        <span>{{ strtoupper($latestPayment->method) }} ({{ $latestPayment->status }})</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="summary-divider"></div>
+
+                            <div class="summary-total">
+                                <span>Total Payment</span>
+                                <span class="total-amount">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
+                            </div>
+
+                            <button class="btn-payment" type="button" data-order-id="{{ $order->id }}" {{ $isPaymentCompleted ? 'disabled' : '' }}>
+                                {{ $isPaymentCompleted ? 'Payment Completed' : 'Complete Payment' }}
+                            </button>
+
+                            <div class="secure-payment">
+                                <span>🔒</span>
+                                <span>Secure payment with SSL encryption</span>
+                            </div>
+                        @else
+                            <p class="empty-message">Belum ada pesanan yang perlu dibayar.</p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 @endsection
+
+@section('scripts')
+    @if($order)
+        <script>
+            window.CafeInPayment = {
+                orderId: {{ $order->id }},
+                completeUrl: @json(route('payments.complete')),
+                saveUrl: @json(route('payments.saveInfo')),
+            };
+        </script>
+    @endif
+@endsection
+

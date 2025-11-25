@@ -35,20 +35,23 @@
                     @php $isAdminRole = auth()->check() && auth()->user()->role?->name === 'Admin'; @endphp
                     @auth
                         @if (auth()->user()->role?->name === 'Admin')
-                            <li><a href="{{ route('admin.dashboard') }}" class="{{ Route::is('admin.dashboard') ? 'active' : '' }}">Dashboard</a></li>
+                            <li><a href="{{ route('admin.dashboard') }}"
+                                    class="{{ Route::is('admin.dashboard') ? 'active' : '' }}">Dashboard</a></li>
                         @elseif (auth()->user()->role?->name === 'Kasir')
-                            <li><a href="{{ route('kasir.dashboard') }}" class="{{ Route::is('kasir.dashboard') ? 'active' : '' }}">Dashboard</a></li>
+                            <li><a href="{{ route('kasir.dashboard') }}"
+                                    class="{{ Route::is('kasir.dashboard') ? 'active' : '' }}">Dashboard</a></li>
                         @endif
                     @endauth
                     @php $hideHome = auth()->check() && in_array(auth()->user()->role?->name, ['Admin', 'Kasir']); @endphp
-                    @if (! $hideHome)
+                    @if (!$hideHome)
                         <li><a href="{{ url('/') }}" class="{{ Request::is('/') ? 'active' : '' }}">Home</a></li>
                     @endif
                     <li><a href="{{ url('/menus') }}" class="{{ Request::is('menus') ? 'active' : '' }}">Menu</a></li>
                     <li><a href="{{ url('/orders') }}" class="{{ Request::is('orders') ? 'active' : '' }}">Orders</a>
                     </li>
-                    @unless($isAdminRole)
-                        <li><a href="{{ url('/payments') }}" class="{{ Request::is('payments') ? 'active' : '' }}">Payments</a></li>
+                    @unless ($isAdminRole)
+                        <li><a href="{{ url('/payments') }}"
+                                class="{{ Request::is('payments') ? 'active' : '' }}">Payments</a></li>
                     @endunless
                 </ul>
 
@@ -58,7 +61,10 @@
                         @php $roleName = auth()->user()->role?->name; @endphp
                         @if ($roleName !== 'Admin')
                             @php
-                                $initialCartCount = \App\Models\Cart::firstWhere('user_id', auth()->id())?->cartItems()->sum('quantity') ?? 0;
+                                $initialCartCount =
+                                    \App\Models\Cart::firstWhere('user_id', auth()->id())
+                                        ?->cartItems()
+                                        ->sum('quantity') ?? 0;
                             @endphp
                             <a href="{{ route('cart') }}" class="nav-cart" aria-label="Cart">
                                 <span class="cart-icon" aria-hidden="true">

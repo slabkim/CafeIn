@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use Midtrans\Config as MidtransConfig;
+use Midtrans\Snap;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,16 +57,25 @@ class PaymentController extends Controller
         return view('payments', [
             'order' => $order,
             'pendingOrders' => $pendingOrders,
-            'paymentMethods' => $this->paymentMethods(),
+            'paymentMethods' => $this->paymentMethods($role),
             'subtotal' => $subtotal,
             'serviceFee' => $serviceFee,
             'latestPayment' => $latestPayment,
         ]);
     }
 
+    private function initMidtrans(): void
+    {
+        MidtransConfig::$serverKey = config('midtrans.server_key');
+        MidtransConfig::$isProduction = config('midtrans.is_production', false);
+        MidtransConfig::$isSanitized = config('midtrans.is_sanitized', true);
+        MidtransConfig::$is3ds = config('midtrans.is_3ds', true);
+    }
+
     public function complete(Request $request): JsonResponse
     {
-        $methods = collect($this->paymentMethods())->pluck('key')->all();
+        $user = $request->user();
+        $methods = collect($this->paymentMethods($user->role?->name))->pluck('key')->all();
 
         $validated = $request->validate([
             'order_id' => ['required', 'integer', 'exists:orders,id'],
@@ -74,7 +85,6 @@ class PaymentController extends Controller
         ]);
 
         $order = Order::with(['payments', 'user'])->findOrFail($validated['order_id']);
-        $user = $request->user();
 
         if ($user->role?->name !== 'Admin' && $user->role?->name !== 'Kasir' && $order->user_id !== $user->id) {
             abort(403);
@@ -88,16 +98,27 @@ class PaymentController extends Controller
         }
 
         DB::transaction(function () use ($order, $validated, $user) {
-            // For Kasir/Admin, allow updating customer name and notes on order metadata (does not change user_id)
-            if (in_array($user->role?->name, ['Admin', 'Kasir'], true)) {
-                $meta = is_array($order->metadata) ? $order->metadata : [];
-                if (!empty($validated['customer_name'])) {
-                    $meta['customer_name'] = $validated['customer_name'];
+            $role = $user->role?->name;
+
+            // Update order metadata (notes for all, customer_name for kasir/admin)
+            $meta = is_array($order->metadata) ? $order->metadata : [];
+            $notes = array_key_exists('notes', $validated)
+                ? trim((string) $validated['notes'])
+                : null;
+
+            if (in_array($role, ['Admin', 'Kasir'], true) && !empty($validated['customer_name'])) {
+                $meta['customer_name'] = $validated['customer_name'];
+            }
+            if (array_key_exists('notes', $validated)) {
+                // prefer 'notes' key; keep backwards compat with 'note'
+                if ($notes === '' || $notes === null) {
+                    unset($meta['notes'], $meta['note']);
+                } else {
+                    $meta['notes'] = $notes;
+                    $meta['note'] = $notes;
                 }
-                if (array_key_exists('notes', $validated)) {
-                    // prefer 'notes' key; keep backwards compat with 'note'
-                    $meta['notes'] = $validated['notes'];
-                }
+            }
+            if ($meta !== $order->metadata) {
                 $order->update(['metadata' => $meta]);
             }
 
@@ -122,10 +143,77 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function snapToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $role = $user->role?->name ?? null;
+
+        $orderId = (int) $request->query('order_id');
+        if ($orderId <= 0) {
+            return response()->json(['success' => false, 'message' => 'Order tidak ditemukan.'], 404);
+        }
+
+        $query = Order::with(['orderItems.menu', 'user'])
+            ->where('id', $orderId)
+            ->whereIn('status', ['pending', 'processing']);
+
+        if ($role === 'Customer') {
+            $query->where('user_id', $user->id);
+        }
+
+        $order = $query->firstOrFail();
+
+        $this->initMidtrans();
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $order->order_number,
+                'gross_amount' => (int) $order->total_price,
+            ],
+            'customer_details' => [
+                'first_name' => $order->metadata['customer_name'] ?? ($order->user?->name ?? 'Guest'),
+                'email' => $order->user?->email ?? null,
+            ],
+        ];
+
+        $token = Snap::getSnapToken($params);
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+        ]);
+    }
+
     public function saveInfo(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!in_array($user->role?->name, ['Admin', 'Kasir'], true)) {
+        $role = $user->role?->name;
+
+        // Customer may update only their own order notes
+        if ($role === 'Customer') {
+            $validated = $request->validate([
+                'order_id' => ['required', 'integer', 'exists:orders,id'],
+                'notes' => ['nullable', 'string', 'max:2000'],
+            ]);
+
+            $order = Order::where('id', $validated['order_id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            $meta = is_array($order->metadata) ? $order->metadata : [];
+            if (array_key_exists('notes', $validated)) {
+                $meta['notes'] = $validated['notes'];
+            }
+
+            $order->update(['metadata' => $meta]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Catatan pesanan berhasil disimpan.',
+            ]);
+        }
+
+        if (!in_array($role, ['Admin', 'Kasir'], true)) {
             abort(403);
         }
 
@@ -138,11 +226,20 @@ class PaymentController extends Controller
         $order = Order::with('payments')->findOrFail($validated['order_id']);
 
         $meta = is_array($order->metadata) ? $order->metadata : [];
+        $notes = array_key_exists('notes', $validated)
+            ? trim((string) $validated['notes'])
+            : null;
+
         if (array_key_exists('customer_name', $validated)) {
             $meta['customer_name'] = $validated['customer_name'];
         }
         if (array_key_exists('notes', $validated)) {
-            $meta['notes'] = $validated['notes'];
+            if ($notes === '' || $notes === null) {
+                unset($meta['notes'], $meta['note']);
+            } else {
+                $meta['notes'] = $notes;
+                $meta['note'] = $notes;
+            }
         }
 
         $order->update(['metadata' => $meta]);
@@ -153,9 +250,21 @@ class PaymentController extends Controller
         ]);
     }
 
-    private function paymentMethods(): array
+    private function paymentMethods(?string $role = null): array
     {
-        return [
+        // Untuk customer, sediakan satu opsi pembayaran online via Midtrans (Snap)
+        if ($role === 'Customer') {
+            return [
+                [
+                    'key' => 'midtrans',
+                    'label' => 'Pembayaran Online',
+                    'description' => 'Bayar dengan Midtrans (kartu, e-wallet, dll)',
+                ],
+            ];
+        }
+
+        // Untuk Kasir/Admin, gunakan metode manual internal
+        $methods = [
             [
                 'key' => 'qris',
                 'label' => 'QRIS',
@@ -176,12 +285,18 @@ class PaymentController extends Controller
                 'label' => 'DANA',
                 'description' => 'Pembayaran lewat DANA',
             ],
-            [
+        ];
+
+        // Hanya role Kasir yang boleh menggunakan metode cash
+        if ($role === 'Kasir') {
+            $methods[] = [
                 'key' => 'cash',
                 'label' => 'Cash',
                 'description' => 'Bayar tunai di kasir',
-            ],
-        ];
+            ];
+        }
+
+        return $methods;
     }
 }
 

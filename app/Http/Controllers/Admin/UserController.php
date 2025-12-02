@@ -23,9 +23,10 @@ class UserController extends Controller
         $roleId = request('role');
 
         if ($q) {
-            $query->where(function ($qBuilder) use ($q) {
-                $qBuilder->where('name', 'like', "%$q%")
-                    ->orWhere('email', 'like', "%$q%");
+            $lq = mb_strtolower($q);
+            $query->where(function ($qBuilder) use ($lq) {
+                $qBuilder->whereRaw('LOWER(name) LIKE ?', ["%{$lq}%"])
+                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$lq}%"]);
             });
         }
 

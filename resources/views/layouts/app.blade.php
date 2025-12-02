@@ -88,7 +88,7 @@
                     <a href="{{ route('register') }}" class="btn btn-primary">Register</a>
                 @endguest
                 @auth
-                    <div class="nav-profile">
+                    <a href="{{ route('profile.show') }}" class="nav-profile">
                         <span class="profile-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" role="img" focusable="false" aria-hidden="true">
                                 <circle cx="12" cy="8" r="4"></circle>
@@ -99,11 +99,7 @@
                             <span class="profile-name">{{ auth()->user()->name }}</span>
                             <span class="profile-role">{{ auth()->user()->role?->name ?? 'User' }}</span>
                         </div>
-                        <form method="POST" action="{{ route('logout') }}" class="logout-form">
-                            @csrf
-                            <button type="submit" class="btn-link">Logout</button>
-                        </form>
-                    </div>
+                    </a>
                 @endauth
             </div>
         </div>

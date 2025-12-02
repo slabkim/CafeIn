@@ -30,8 +30,12 @@ class User extends Authenticatable implements CanResetPasswordContract
         'password',
         'phone',
         'role_id',
+        'google_id',
         'email_verified_at',
         'remember_token',
+        'birthdate',
+        'address',
+        'avatar',
     ];
 
     /**

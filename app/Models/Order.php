@@ -44,11 +44,12 @@ class Order extends Model
 
     public function scopeCurrent($query)
     {
-        return $query->whereNotIn('status', ['paid', 'completed', 'cancelled']);
+        // Treat all non-finished orders (pending/paid/processing) as aktif
+        return $query->whereNotIn('status', ['completed', 'cancelled']);
     }
 
     public function scopeHistory($query)
     {
-        return $query->whereIn('status', ['paid', 'completed', 'cancelled']);
+        return $query->whereIn('status', ['completed', 'cancelled']);
     }
 }

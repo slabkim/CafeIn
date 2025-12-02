@@ -89,16 +89,17 @@ class MenuController extends Controller
         $categoryId = $request->input('category');
 
         if ($q) {
-            $query->where(function ($qb) use ($q) {
-                $qb->where('name', 'like', "%$q%")
-                    ->orWhere('description', 'like', "%$q%");
+            $lq = mb_strtolower($q);
+            $query->where(function ($qb) use ($lq) {
+                $qb->whereRaw('LOWER(name) LIKE ?', ["%{$lq}%"])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ["%{$lq}%"]);
             });
         }
         if ($categoryId) {
             $query->where('category_id', $categoryId);
         }
 
-        $menus = $query->orderBy('name')->withQueryString()->paginate(12);
+        $menus = $query->orderBy('name')->paginate(12)->withQueryString();
 
         return view('admin.menus.index', [
             'menus' => $menus,

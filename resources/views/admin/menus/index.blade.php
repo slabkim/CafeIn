@@ -25,24 +25,40 @@
                 </div>
             @endif
 
-            <div class="page-actions actions-row mb-3">
-                <a href="{{ route('admin.menus.create') }}" class="btn-primary">Tambah Menu</a>
+            <div class="search-card">
+                <div class="search-card-header">
+                    <div>
+                        <div class="search-card-title">Filter Menu</div>
+                        <div class="search-card-subtitle">Cari menu dan batasi berdasarkan kategori.</div>
+                    </div>
+                    <a href="{{ route('admin.menus.create') }}" class="btn-primary">Tambah Menu</a>
+                </div>
 
-                <form id="menu-filter-form" method="GET" action="{{ route('admin.menus.index') }}" class="page-actions actions-row">
-                    <div class="form-group">
-                        <label for="q">Cari</label>
-                        <input type="text" id="q" name="q" value="{{ $filter['q'] ?? '' }}" placeholder="Nama / Deskripsi">
+                <form id="menu-filter-form" method="GET" action="{{ route('admin.menus.index') }}">
+                    <div class="search-row">
+                        <div class="form-group search-main">
+                            <label for="q">Cari</label>
+                            <div class="search-input-wrap">
+                                <span class="search-input-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <circle cx="11" cy="11" r="6"></circle>
+                                        <line x1="16" y1="16" x2="21" y2="21"></line>
+                                    </svg>
+                                </span>
+                                <input type="text" id="q" name="q" value="{{ $filter['q'] ?? '' }}" placeholder="Nama / Deskripsi">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Kategori</label>
+                            <select id="category" name="category">
+                                <option value="">Semua</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" @selected(($filter['category'] ?? '') == $cat->id)>{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-secondary">Filter</button>
                     </div>
-                    <div class="form-group">
-                        <label for="category">Kategori</label>
-                        <select id="category" name="category">
-                            <option value="">Semua</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}" @selected(($filter['category'] ?? '') == $cat->id)>{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-secondary">Filter</button>
                 </form>
             </div>
 

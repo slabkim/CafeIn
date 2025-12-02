@@ -10,6 +10,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CashierDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\ProfileController;
+use Laravel\Socialite\Facades\Socialite;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/menus', MenuController::class)->name('menus');
@@ -64,18 +66,48 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders', OrderController::class)->name('orders');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/track', [OrderController::class, 'track'])->name('orders.track');
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
     Route::get('/payments', PaymentController::class)->name('payments');
+    Route::get('/payments/snap-token', [PaymentController::class, 'snapToken'])->name('payments.snapToken');
     Route::post('/payments/complete', [PaymentController::class, 'complete'])->name('payments.complete');
     Route::post('/payments/save-info', [PaymentController::class, 'saveInfo'])->name('payments.saveInfo');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+
+    // Google OAuth
+    Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
     // Password reset
     Route::get('/password/reset/{token}', [AuthController::class, 'showReset'])->name('password.reset');
     Route::post('/password/reset', [AuthController::class, 'reset'])->name('password.update');
 });
+
+// Dev-only: show configured google redirect and Socialite's authorize URL.
+if (app()->environment('local')) {
+    Route::get('/dev/google-debug', function () {
+        $redirectUri = config('services.google.redirect');
+        $driver = Socialite::driver('google');
+        /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
+
+        $authorizeUrl = $driver->stateless()
+            ->redirectUrl($redirectUri)
+            ->redirect()
+            ->getTargetUrl();
+
+        return response()->json([
+            'google_config_redirect' => $redirectUri,
+            'socialite_authorize_url' => $authorizeUrl,
+        ]);
+    });
+}

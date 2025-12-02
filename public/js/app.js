@@ -1,614 +1,702 @@
 // CafeIn - Main JavaScript File
-
+// Firebase analytics disabled in this build (browser module imports removed)
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ========== Cart Functionality (server-side via AJAX) ==========
-    // Update cart count by calling server endpoint (already present in layout script too)
-    function updateCartCount() {
-        fetch('/cart/count')
-            .then(response => response.json())
-            .then(data => {
-                const cartCountElements = document.querySelectorAll('.cart-count');
-                cartCountElements.forEach(el => {
-                    el.textContent = data.count;
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching cart count:', error);
-            });
-    }
+            // ========== Cart Functionality (server-side via AJAX) ==========
+            // Update cart count by calling server endpoint (already present in layout script too)
+            function updateCartCount() {
+                fetch('/cart/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        const cartCountElements = document.querySelectorAll('.cart-count');
+                        cartCountElements.forEach(el => {
+                            el.textContent = data.count;
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching cart count:', error);
+                    });
+            }
 
-    const cartConfig = window.CafeInCart || {};
-    const summaryEls = {
-        total: document.querySelector('[data-cart-total]'),
-        service: document.querySelector('[data-cart-service]'),
-        grand: document.querySelector('[data-cart-grand]'),
-    };
+            const cartConfig = window.CafeInCart || {};
+            const summaryEls = {
+                total: document.querySelector('[data-cart-total]'),
+                service: document.querySelector('[data-cart-service]'),
+                grand: document.querySelector('[data-cart-grand]'),
+            };
 
-    function updateCartSummary(cartTotal) {
-        if (!summaryEls.total) {
-            return;
-        }
+            function updateCartSummary(cartTotal) {
+                if (!summaryEls.total) {
+                    return;
+                }
 
-        const totalValue = typeof cartTotal === 'number' ?
-            cartTotal :
-            parseFloat(cartTotal || cartConfig.baseTotal || 0) || 0;
-        const rate = parseFloat(cartConfig.serviceFeeRate || 0);
-        const serviceFee = totalValue * rate;
-        const grandTotal = totalValue + serviceFee;
+                const totalValue = typeof cartTotal === 'number' ?
+                    cartTotal :
+                    parseFloat(cartTotal || cartConfig.baseTotal || 0) || 0;
+                const rate = parseFloat(cartConfig.serviceFeeRate || 0);
+                const serviceFee = totalValue * rate;
+                const grandTotal = totalValue + serviceFee;
 
-        summaryEls.total.textContent = formatCurrency(totalValue);
-        if (summaryEls.service) {
-            summaryEls.service.textContent = formatCurrency(serviceFee);
-        }
-        if (summaryEls.grand) {
-            summaryEls.grand.textContent = formatCurrency(grandTotal);
-        }
+                summaryEls.total.textContent = formatCurrency(totalValue);
+                if (summaryEls.service) {
+                    summaryEls.service.textContent = formatCurrency(serviceFee);
+                }
+                if (summaryEls.grand) {
+                    summaryEls.grand.textContent = formatCurrency(grandTotal);
+                }
 
-        cartConfig.baseTotal = totalValue;
-    }
+                cartConfig.baseTotal = totalValue;
+            }
 
-    function renderEmptyCart() {
-        const container = document.querySelector('.cart-section .container');
-        if (!container) {
-            return;
-        }
-        container.innerHTML = `
+            function renderEmptyCart() {
+                const container = document.querySelector('.cart-section .container');
+                if (!container) {
+                    return;
+                }
+                container.innerHTML = `
             <div class="empty-cart">
                 <p>Your cart is empty.</p>
                 <a href="${cartConfig.menuUrl || '/menus'}" class="btn-primary">Browse Menu</a>
             </div>
         `;
-    }
-
-    // Delegate add-to-cart, quantity and remove button clicks
-    document.body.addEventListener('click', function(e) {
-        const target = e.target;
-
-        // Add to cart buttons (menu pages)
-        if (target.classList.contains('btn-add')) {
-            e.preventDefault();
-            const menuId = target.getAttribute('data-menu-id');
-            if (!menuId) return;
-
-            // Check if user logged in via meta
-            const isLoggedInMeta = document.querySelector('meta[name="user-logged-in"]');
-            const isLoggedIn = isLoggedInMeta && isLoggedInMeta.getAttribute('content') === 'true';
-            if (!isLoggedIn) {
-                window.location.href = '/login';
-                return;
             }
 
-            // determine quantity: if from modal, read modal qty; else default 1
-            let qty = 1;
-            const modalQty = document.getElementById('md-qty-input');
-            if (target.id === 'md-add' && modalQty) {
-                qty = parseInt(modalQty.value, 10) || 1;
-            }
+            // Delegate add-to-cart, quantity and remove button clicks
+            document.body.addEventListener('click', function(e) {
+                const target = e.target;
 
-            // prevent double-click
-            target.disabled = true;
-            target.classList.add('is-loading');
+                // Add to cart buttons (menu pages)
+                const addBtn = target.closest('.btn-add');
+                if (addBtn) {
+                    e.preventDefault();
+                    const menuId = addBtn.getAttribute('data-menu-id');
+                    if (!menuId) return;
 
-            fetch(`/cart/add/${menuId}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ quantity: qty }),
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        updateCartCount();
-                        if (typeof data.cartTotal !== 'undefined') {
-                            updateCartSummary(parseFloat(data.cartTotal));
-                        }
-                        showNotification('Item added to cart', 'success');
-                    } else {
-                        showNotification('Failed to add item to cart', 'error');
+                    // Check if user logged in via meta
+                    const isLoggedInMeta = document.querySelector('meta[name="user-logged-in"]');
+                    const isLoggedIn = isLoggedInMeta && isLoggedInMeta.getAttribute('content') === 'true';
+                    if (!isLoggedIn) {
+                        window.location.href = '/login';
+                        return;
                     }
-                })
-                .catch(err => {
-                    console.error('Error adding to cart:', err);
-                    showNotification('Gagal menambahkan ke keranjang.', 'error');
-                })
-                .finally(() => {
-                    target.disabled = false;
-                    target.classList.remove('is-loading');
-                });
 
-            return; // avoid falling through
-        }
-
-        // Quantity buttons
-        const qtyButton = target.closest('.qty-btn');
-        if (qtyButton) {
-            e.preventDefault();
-            const action = qtyButton.getAttribute('data-action');
-            const itemElem = qtyButton.closest('.cart-item');
-            if (!itemElem || !action) return;
-            const cartItemId = itemElem.getAttribute('data-cart-item-id');
-            const qtyInput = itemElem.querySelector('.quantity-input');
-            if (!qtyInput || !cartItemId) return;
-            const currentQuantity = parseInt(qtyInput.value, 10) || 1;
-            let quantity = currentQuantity;
-
-            if (action === 'increase') {
-                quantity = currentQuantity + 1;
-            } else if (action === 'decrease') {
-                quantity = Math.max(1, currentQuantity - 1);
-            }
-
-            // Nothing to update when already at minimum
-            if (quantity === currentQuantity) {
-                return;
-            }
-
-            qtyInput.value = quantity;
-
-            // PATCH to update quantity
-            fetch(`/cart/item/${cartItemId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ quantity }),
-                })
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`Failed to update cart item: ${res.status}`);
+                    // determine quantity: if from modal, read modal qty; else default 1
+                    let qty = 1;
+                    const modalQty = document.getElementById('md-qty-input');
+                    if (addBtn.id === 'md-add' && modalQty) {
+                        qty = parseInt(modalQty.value, 10) || 1;
                     }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        updateCartCount();
-                        const subtotalElem = itemElem.querySelector('[data-item-subtotal]');
-                        if (subtotalElem && typeof data.itemSubtotal !== 'undefined') {
-                            subtotalElem.textContent = formatCurrency(parseFloat(data.itemSubtotal));
-                        } else if (subtotalElem) {
-                            const unitPrice = parseFloat(itemElem.getAttribute('data-unit-price'));
-                            const quantity = parseInt(qtyInput.value, 10);
-                            const subtotal = unitPrice * quantity;
-                            subtotalElem.textContent = formatCurrency(subtotal);
-                            // Recalculate cart total
-                            let newTotal = 0;
-                            document.querySelectorAll('.cart-item').forEach(item => {
-                                const price = parseFloat(item.getAttribute('data-unit-price'));
-                                const qty = parseInt(item.querySelector('.quantity-input').value, 10);
-                                newTotal += price * qty;
-                            });
-                            updateCartSummary(newTotal);
-                        }
-                        if (typeof data.cartTotal !== 'undefined') {
-                            updateCartSummary(parseFloat(data.cartTotal));
-                        }
-                        showNotification('Quantity updated', 'success');
-                    } else {
-                        showNotification('Failed to update quantity', 'error');
-                    }
-                })
-                .catch(err => {
-                    console.error('Error updating quantity:', err);
-                    showNotification('Failed to update quantity', 'error');
-                });
-        }
 
-        // Quantity input change
-        const qtyInput = target.closest('.quantity-input');
-        if (qtyInput && target === qtyInput) {
-            const itemElem = qtyInput.closest('.cart-item');
-            if (!itemElem) return;
-            const cartItemId = itemElem.getAttribute('data-cart-item-id');
-            const quantity = parseInt(qtyInput.value, 10) || 1;
+                    // prevent double-click
+                    addBtn.disabled = true;
+                    addBtn.classList.add('is-loading');
 
-            if (quantity < 1) {
-                qtyInput.value = 1;
-                return;
-            }
+                    fetch(`/cart/add/${menuId}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ quantity: qty }),
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                updateCartCount();
+                                if (typeof data.cartTotal !== 'undefined') {
+                                    updateCartSummary(parseFloat(data.cartTotal));
+                                }
+                                showNotification('Item added to cart', 'success');
+                            } else {
+                                showNotification('Failed to add item to cart', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error adding to cart:', err);
+                            showNotification('Gagal menambahkan ke keranjang.', 'error');
+                        })
+                        .finally(() => {
+                            addBtn.disabled = false;
+                            addBtn.classList.remove('is-loading');
+                        });
 
-            // PATCH to update quantity
-            fetch(`/cart/item/${cartItemId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ quantity }),
-                })
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`Failed to update cart item: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        updateCartCount();
-                        const subtotalElem = itemElem.querySelector('[data-item-subtotal]');
-                        if (subtotalElem && typeof data.itemSubtotal !== 'undefined') {
-                            subtotalElem.textContent = formatCurrency(parseFloat(data.itemSubtotal));
-                        } else if (subtotalElem) {
-                            const unitPrice = parseFloat(itemElem.getAttribute('data-unit-price'));
-                            const quantity = parseInt(qtyInput.value, 10);
-                            const subtotal = unitPrice * quantity;
-                            subtotalElem.textContent = formatCurrency(subtotal);
-                            // Recalculate cart total
-                            let newTotal = 0;
-                            document.querySelectorAll('.cart-item').forEach(item => {
-                                const price = parseFloat(item.getAttribute('data-unit-price'));
-                                const qty = parseInt(item.querySelector('.quantity-input').value, 10);
-                                newTotal += price * qty;
-                            });
-                            updateCartSummary(newTotal);
-                        }
-                        if (typeof data.cartTotal !== 'undefined') {
-                            updateCartSummary(parseFloat(data.cartTotal));
-                        }
-                        showNotification('Quantity updated', 'success');
-                    } else {
-                        showNotification('Failed to update quantity', 'error');
-                    }
-                })
-                .catch(err => {
-                    console.error('Error updating quantity:', err);
-                    showNotification('Failed to update quantity', 'error');
-                });
-        }
-
-        // Remove button
-        const removeButton = target.closest('.cart-remove-btn, .remove-btn, [data-action="remove"]');
-        if (removeButton) {
-            e.preventDefault();
-            const itemElem = removeButton.closest('.cart-item');
-            if (!itemElem) return;
-            const cartItemId = itemElem.getAttribute('data-cart-item-id');
-            if (!cartItemId) return;
-
-            fetch(`/cart/item/${cartItemId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                    },
-                })
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`Failed to remove cart item: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        itemElem.remove();
-                        updateCartCount();
-                        if (typeof data.cartTotal !== 'undefined') {
-                            updateCartSummary(parseFloat(data.cartTotal));
-                        }
-                        showNotification('Item removed', 'success');
-                        if (!document.querySelector('.cart-item')) {
-                            renderEmptyCart();
-                        }
-                    } else {
-                        showNotification('Failed to remove item', 'error');
-                    }
-                })
-                .catch(err => {
-                    console.error('Error removing item:', err);
-                    showNotification('Failed to remove item', 'error');
-                });
-        }
-    });
-
-    const checkoutButton = document.querySelector('.checkout-btn');
-    if (checkoutButton && cartConfig.checkoutUrl) {
-        checkoutButton.addEventListener('click', () => {
-            if ((cartConfig.baseTotal || 0) <= 0) {
-                showNotification('Tambahkan item ke keranjang terlebih dahulu.', 'error');
-                return;
-            }
-
-            checkoutButton.disabled = true;
-            checkoutButton.classList.add('is-loading');
-
-            fetch(cartConfig.checkoutUrl, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({}),
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification(data.message || 'Pesanan berhasil dibuat.', 'success');
-                        cartConfig.baseTotal = 0;
-                        updateCartSummary(0);
-                        renderEmptyCart();
-                        updateCartCount();
-                        const redirectUrl = data.redirect || cartConfig.paymentsUrl || '/payments';
-                        setTimeout(() => {
-                            window.location.href = redirectUrl;
-                        }, 700);
-                    } else {
-                        showNotification(data.message || 'Gagal membuat pesanan.', 'error');
-                    }
-                })
-                .catch(err => {
-                    console.error('Error during checkout:', err);
-                    showNotification('Terjadi kesalahan saat membuat pesanan.', 'error');
-                })
-                .finally(() => {
-                    checkoutButton.disabled = false;
-                    checkoutButton.classList.remove('is-loading');
-                });
-        });
-    }
-
-    if (summaryEls.total) {
-        updateCartSummary(cartConfig.baseTotal || 0);
-    }
-
-    const paymentConfig = window.CafeInPayment || null;
-    if (paymentConfig && paymentConfig.completeUrl) {
-        const paymentButton = document.querySelector('.btn-payment');
-        if (paymentButton) {
-            paymentButton.addEventListener('click', () => {
-                const selectedMethod = document.querySelector('input[name="payment"]:checked');
-                if (!selectedMethod) {
-                    showNotification('Pilih metode pembayaran terlebih dahulu.', 'error');
-                    return;
+                    return; // avoid falling through
                 }
 
-                paymentButton.disabled = true;
-                paymentButton.classList.add('is-loading');
+                // Quantity buttons
+                const qtyButton = target.closest('.qty-btn');
+                if (qtyButton) {
+                    e.preventDefault();
+                    const action = qtyButton.getAttribute('data-action');
+                    const itemElem = qtyButton.closest('.cart-item');
+                    if (!itemElem || !action) return;
+                    const cartItemId = itemElem.getAttribute('data-cart-item-id');
+                    const qtyInput = itemElem.querySelector('.quantity-input');
+                    if (!qtyInput || !cartItemId) return;
+                    const currentQuantity = parseInt(qtyInput.value, 10) || 1;
+                    let quantity = currentQuantity;
 
-                fetch(paymentConfig.completeUrl, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify((() => {
-                            const payload = {
-                                order_id: paymentConfig.orderId,
-                                method: selectedMethod.value,
-                            };
-                            const nameEl = document.getElementById('cf-customer-name');
-                            const notesEl = document.getElementById('cf-notes');
-                            if (nameEl) payload.customer_name = nameEl.value.trim();
-                            if (notesEl) payload.notes = notesEl.value.trim();
-                            return payload;
-                        })()),
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            showNotification(data.message || 'Pembayaran berhasil.', 'success');
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 600);
-                        } else {
-                            showNotification(data.message || 'Gagal menyelesaikan pembayaran.', 'error');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Error completing payment:', err);
-                        showNotification('Terjadi kesalahan saat memproses pembayaran.', 'error');
-                    })
-                    .finally(() => {
-                        paymentButton.disabled = false;
-                        paymentButton.classList.remove('is-loading');
-                    });
+                    if (action === 'increase') {
+                        quantity = currentQuantity + 1;
+                    } else if (action === 'decrease') {
+                        quantity = Math.max(1, currentQuantity - 1);
+                    }
+
+                    // Nothing to update when already at minimum
+                    if (quantity === currentQuantity) {
+                        return;
+                    }
+
+                    qtyInput.value = quantity;
+
+                    // PATCH to update quantity
+                    fetch(`/cart/item/${cartItemId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ quantity }),
+                        })
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error(`Failed to update cart item: ${res.status}`);
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                updateCartCount();
+                                const subtotalElem = itemElem.querySelector('[data-item-subtotal]');
+                                if (subtotalElem && typeof data.itemSubtotal !== 'undefined') {
+                                    subtotalElem.textContent = formatCurrency(parseFloat(data.itemSubtotal));
+                                } else if (subtotalElem) {
+                                    const unitPrice = parseFloat(itemElem.getAttribute('data-unit-price'));
+                                    const quantity = parseInt(qtyInput.value, 10);
+                                    const subtotal = unitPrice * quantity;
+                                    subtotalElem.textContent = formatCurrency(subtotal);
+                                    // Recalculate cart total
+                                    let newTotal = 0;
+                                    document.querySelectorAll('.cart-item').forEach(item => {
+                                        const price = parseFloat(item.getAttribute('data-unit-price'));
+                                        const qty = parseInt(item.querySelector('.quantity-input').value, 10);
+                                        newTotal += price * qty;
+                                    });
+                                    updateCartSummary(newTotal);
+                                }
+                                if (typeof data.cartTotal !== 'undefined') {
+                                    updateCartSummary(parseFloat(data.cartTotal));
+                                }
+                                showNotification('Quantity updated', 'success');
+                            } else {
+                                showNotification('Failed to update quantity', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error updating quantity:', err);
+                            showNotification('Failed to update quantity', 'error');
+                        });
+                }
+
+                // Quantity input change
+                const qtyInput = target.closest('.quantity-input');
+                if (qtyInput && target === qtyInput) {
+                    const itemElem = qtyInput.closest('.cart-item');
+                    if (!itemElem) return;
+                    const cartItemId = itemElem.getAttribute('data-cart-item-id');
+                    const quantity = parseInt(qtyInput.value, 10) || 1;
+
+                    if (quantity < 1) {
+                        qtyInput.value = 1;
+                        return;
+                    }
+
+                    // PATCH to update quantity
+                    fetch(`/cart/item/${cartItemId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ quantity }),
+                        })
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error(`Failed to update cart item: ${res.status}`);
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                updateCartCount();
+                                const subtotalElem = itemElem.querySelector('[data-item-subtotal]');
+                                if (subtotalElem && typeof data.itemSubtotal !== 'undefined') {
+                                    subtotalElem.textContent = formatCurrency(parseFloat(data.itemSubtotal));
+                                } else if (subtotalElem) {
+                                    const unitPrice = parseFloat(itemElem.getAttribute('data-unit-price'));
+                                    const quantity = parseInt(qtyInput.value, 10);
+                                    const subtotal = unitPrice * quantity;
+                                    subtotalElem.textContent = formatCurrency(subtotal);
+                                    // Recalculate cart total
+                                    let newTotal = 0;
+                                    document.querySelectorAll('.cart-item').forEach(item => {
+                                        const price = parseFloat(item.getAttribute('data-unit-price'));
+                                        const qty = parseInt(item.querySelector('.quantity-input').value, 10);
+                                        newTotal += price * qty;
+                                    });
+                                    updateCartSummary(newTotal);
+                                }
+                                if (typeof data.cartTotal !== 'undefined') {
+                                    updateCartSummary(parseFloat(data.cartTotal));
+                                }
+                                showNotification('Quantity updated', 'success');
+                            } else {
+                                showNotification('Failed to update quantity', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error updating quantity:', err);
+                            showNotification('Failed to update quantity', 'error');
+                        });
+                }
+
+                // Remove button
+                const removeButton = target.closest('.cart-remove-btn, .remove-btn, [data-action="remove"]');
+                if (removeButton) {
+                    e.preventDefault();
+                    const itemElem = removeButton.closest('.cart-item');
+                    if (!itemElem) return;
+                    const cartItemId = itemElem.getAttribute('data-cart-item-id');
+                    if (!cartItemId) return;
+
+                    fetch(`/cart/item/${cartItemId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error(`Failed to remove cart item: ${res.status}`);
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                itemElem.remove();
+                                updateCartCount();
+                                if (typeof data.cartTotal !== 'undefined') {
+                                    updateCartSummary(parseFloat(data.cartTotal));
+                                }
+                                showNotification('Item removed', 'success');
+                                if (!document.querySelector('.cart-item')) {
+                                    renderEmptyCart();
+                                }
+                            } else {
+                                showNotification('Failed to remove item', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error removing item:', err);
+                            showNotification('Failed to remove item', 'error');
+                        });
+                }
             });
-        }
-    }
 
-    // Save order info (cashier/admin)
-    if (paymentConfig && paymentConfig.saveUrl) {
-        const saveBtn = document.getElementById('btn-save-order-info');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
+            const checkoutButton = document.querySelector('.checkout-btn');
+            if (checkoutButton && cartConfig.checkoutUrl) {
+                checkoutButton.addEventListener('click', () => {
+                    if ((cartConfig.baseTotal || 0) <= 0) {
+                        showNotification('Tambahkan item ke keranjang terlebih dahulu.', 'error');
+                        return;
+                    }
+
+                    checkoutButton.disabled = true;
+                    checkoutButton.classList.add('is-loading');
+
+                    fetch(cartConfig.checkoutUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({}),
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                showNotification(data.message || 'Pesanan berhasil dibuat.', 'success');
+                                cartConfig.baseTotal = 0;
+                                updateCartSummary(0);
+                                renderEmptyCart();
+                                updateCartCount();
+                                const redirectUrl = data.redirect || cartConfig.paymentsUrl || '/payments';
+                                setTimeout(() => {
+                                    window.location.href = redirectUrl;
+                                }, 700);
+                            } else {
+                                showNotification(data.message || 'Gagal membuat pesanan.', 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error during checkout:', err);
+                            showNotification('Terjadi kesalahan saat membuat pesanan.', 'error');
+                        })
+                        .finally(() => {
+                            checkoutButton.disabled = false;
+                            checkoutButton.classList.remove('is-loading');
+                        });
+                });
+            }
+
+            if (summaryEls.total) {
+                updateCartSummary(cartConfig.baseTotal || 0);
+            }
+
+            const paymentConfig = window.CafeInPayment || null;
+            if (paymentConfig && paymentConfig.completeUrl) {
+                const paymentButton = document.querySelector('.btn-payment');
+                if (paymentButton) {
+                    paymentButton.addEventListener('click', () => {
+                        const selectedMethod = document.querySelector('input[name="payment"]:checked');
+                        if (!selectedMethod) {
+                            showNotification('Pilih metode pembayaran terlebih dahulu.', 'error');
+                            return;
+                        }
+
+                        const method = selectedMethod.value;
+
+                        // Alur khusus Midtrans (Snap) untuk customer
+                        if (method === 'midtrans' && paymentConfig.snapUrl && typeof snap !== 'undefined') {
+                            paymentButton.disabled = true;
+                            paymentButton.classList.add('is-loading');
+
+                            fetch(paymentConfig.snapUrl, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json',
+                                },
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (!data.success || !data.token) {
+                                        throw new Error(data.message || 'Gagal mendapatkan token pembayaran.');
+                                    }
+                                    snap.pay(data.token, {
+                                        onSuccess: function () {
+                                            // Setelah Midtrans sukses, catat pembayaran di server
+                                            fetch(paymentConfig.completeUrl, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                                    'Content-Type': 'application/json',
+                                                    'Accept': 'application/json',
+                                                },
+                                                body: JSON.stringify((() => {
+                                                    const payload = {
+                                                        order_id: paymentConfig.orderId,
+                                                        method: method,
+                                                    };
+                                                    const nameEl = document.getElementById('cf-customer-name');
+                                                    const notesEl = document.getElementById('cf-notes');
+                                                    if (nameEl) payload.customer_name = nameEl.value.trim();
+                                                    if (notesEl) payload.notes = notesEl.value.trim();
+                                                    return payload;
+                                                })()),
+                                            })
+                                                .then(r => r.json())
+                                                .then(result => {
+                                                    if (result.success) {
+                                                        showNotification(result.message || 'Pembayaran berhasil.', 'success');
+                                                        setTimeout(() => window.location.reload(), 600);
+                                                    } else {
+                                                        showNotification(result.message || 'Gagal mencatat pembayaran.', 'error');
+                                                    }
+                                                })
+                                                .catch(err => {
+                                                    console.error('Error completing payment after Midtrans:', err);
+                                                    showNotification('Terjadi kesalahan saat mencatat pembayaran.', 'error');
+                                                })
+                                                .finally(() => {
+                                                    paymentButton.disabled = false;
+                                                    paymentButton.classList.remove('is-loading');
+                                                });
+                                        },
+                                        onPending: function () {
+                                            showNotification('Pembayaran masih pending di Midtrans.', 'info');
+                                            paymentButton.disabled = false;
+                                            paymentButton.classList.remove('is-loading');
+                                        },
+                                        onError: function () {
+                                            showNotification('Pembayaran melalui Midtrans gagal.', 'error');
+                                            paymentButton.disabled = false;
+                                            paymentButton.classList.remove('is-loading');
+                                        },
+                                        onClose: function () {
+                                            paymentButton.disabled = false;
+                                            paymentButton.classList.remove('is-loading');
+                                        },
+                                    });
+                                })
+                                .catch(err => {
+                                    console.error('Error getting Midtrans Snap token:', err);
+                                    showNotification('Gagal memulai pembayaran Midtrans.', 'error');
+                                    paymentButton.disabled = false;
+                                    paymentButton.classList.remove('is-loading');
+                                });
+
+                            return;
+                        }
+
+                        // Alur pembayaran internal (kasir/admin)
+                        paymentButton.disabled = true;
+                        paymentButton.classList.add('is-loading');
+
+                        fetch(paymentConfig.completeUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify((() => {
+                                const payload = {
+                                    order_id: paymentConfig.orderId,
+                                    method: method,
+                                };
+                                const nameEl = document.getElementById('cf-customer-name');
+                                const notesEl = document.getElementById('cf-notes');
+                                if (nameEl) payload.customer_name = nameEl.value.trim();
+                                if (notesEl) payload.notes = notesEl.value.trim();
+                                return payload;
+                            })()),
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    showNotification(data.message || 'Pembayaran berhasil.', 'success');
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 600);
+                                } else {
+                                    showNotification(data.message || 'Gagal menyelesaikan pembayaran.', 'error');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Error completing payment:', err);
+                                showNotification('Terjadi kesalahan saat memproses pembayaran.', 'error');
+                            })
+                            .finally(() => {
+                                paymentButton.disabled = false;
+                                paymentButton.classList.remove('is-loading');
+                            });
+                    });
+                }
+            }
+
+            // Save order info (cashier/admin)
+            if (paymentConfig && paymentConfig.saveUrl) {
+                const saveBtn = document.getElementById('btn-save-order-info');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', () => {
+                        const nameEl = document.getElementById('cf-customer-name');
+                        const notesEl = document.getElementById('cf-notes');
+                        const payload = {
+                            order_id: paymentConfig.orderId,
+                            customer_name: nameEl ? (nameEl.value || '').trim() : undefined,
+                            notes: notesEl ? (notesEl.value || '').trim() : undefined,
+                        };
+                        saveBtn.disabled = true;
+                        fetch(paymentConfig.saveUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                },
+                                body: JSON.stringify(payload),
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data && data.success) {
+                                    showNotification(data.message || 'Informasi order disimpan.', 'success');
+                                    const now = new Date();
+                                    const stamp = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                                    const cs = document.getElementById('cf-customer-status');
+                                    const ns = document.getElementById('cf-notes-status');
+                                    if (cs) cs.textContent = `Tersimpan ${stamp}`;
+                                    if (ns) ns.textContent = `Tersimpan ${stamp}`;
+                                } else {
+                                    showNotification('Gagal menyimpan informasi order.', 'error');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Save order info error', err);
+                                showNotification('Terjadi kesalahan saat menyimpan.', 'error');
+                            })
+                            .finally(() => {
+                                saveBtn.disabled = false;
+                            });
+                    });
+                }
+
+                // Autosave with debounce on inputs
                 const nameEl = document.getElementById('cf-customer-name');
                 const notesEl = document.getElementById('cf-notes');
-                const payload = {
-                    order_id: paymentConfig.orderId,
-                    customer_name: nameEl ? (nameEl.value || '').trim() : undefined,
-                    notes: notesEl ? (notesEl.value || '').trim() : undefined,
+                const cs = document.getElementById('cf-customer-status');
+                const ns = document.getElementById('cf-notes-status');
+                let t;
+                let lastSaved = {
+                    name: nameEl ? nameEl.value : undefined,
+                    notes: notesEl ? notesEl.value : undefined,
                 };
-                saveBtn.disabled = true;
-                fetch(paymentConfig.saveUrl, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.success) {
-                        showNotification(data.message || 'Informasi order disimpan.', 'success');
-                        const now = new Date();
-                        const stamp = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                        const cs = document.getElementById('cf-customer-status');
-                        const ns = document.getElementById('cf-notes-status');
-                        if (cs) cs.textContent = `Tersimpan ${stamp}`;
-                        if (ns) ns.textContent = `Tersimpan ${stamp}`;
-                    } else {
-                        showNotification('Gagal menyimpan informasi order.', 'error');
-                    }
-                })
-                .catch(err => {
-                    console.error('Save order info error', err);
-                    showNotification('Terjadi kesalahan saat menyimpan.', 'error');
-                })
-                .finally(() => {
-                    saveBtn.disabled = false;
-                });
-            });
-        }
 
-        // Autosave with debounce on inputs
-        const nameEl = document.getElementById('cf-customer-name');
-        const notesEl = document.getElementById('cf-notes');
-        const cs = document.getElementById('cf-customer-status');
-        const ns = document.getElementById('cf-notes-status');
-        let t;
-        let lastSaved = {
-            name: nameEl ? nameEl.value : undefined,
-            notes: notesEl ? notesEl.value : undefined,
-        };
+                function setSaving(el) { if (el) el.textContent = 'Menyimpan…'; }
 
-        function setSaving(el) { if (el) el.textContent = 'Menyimpan…'; }
-        function setSaved(el) {
-            if (!el) return;
-            const now = new Date();
-            const stamp = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            el.textContent = `Tersimpan ${stamp}`;
-        }
-
-        function autosave() {
-            const nameVal = nameEl ? nameEl.value.trim() : undefined;
-            const notesVal = notesEl ? notesEl.value.trim() : undefined;
-            const changed = (nameVal !== lastSaved.name) || (notesVal !== lastSaved.notes);
-            if (!changed) return;
-            if (cs) setSaving(cs);
-            if (ns) setSaving(ns);
-            fetch(paymentConfig.saveUrl, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    order_id: paymentConfig.orderId,
-                    customer_name: nameVal,
-                    notes: notesVal,
-                }),
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.success) {
-                    lastSaved = { name: nameVal, notes: notesVal };
-                    setSaved(cs);
-                    setSaved(ns);
+                function setSaved(el) {
+                    if (!el) return;
+                    const now = new Date();
+                    const stamp = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    el.textContent = `Tersimpan ${stamp}`;
                 }
-            })
-            .catch(err => console.error('Autosave error', err));
-        }
 
-        [nameEl, notesEl].forEach(el => {
-            if (!el) return;
-            el.addEventListener('input', () => {
-                clearTimeout(t);
-                t = setTimeout(autosave, 600);
-            });
-            el.addEventListener('blur', () => {
-                clearTimeout(t);
-                autosave();
-            });
-        });
-    }
+                function autosave() {
+                    const nameVal = nameEl ? nameEl.value.trim() : undefined;
+                    const notesVal = notesEl ? notesEl.value.trim() : undefined;
+                    const changed = (nameVal !== lastSaved.name) || (notesVal !== lastSaved.notes);
+                    if (!changed) return;
+                    if (cs) setSaving(cs);
+                    if (ns) setSaving(ns);
+                    fetch(paymentConfig.saveUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                order_id: paymentConfig.orderId,
+                                customer_name: nameVal,
+                                notes: notesVal,
+                            }),
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.success) {
+                                lastSaved = { name: nameVal, notes: notesVal };
+                                setSaved(cs);
+                                setSaved(ns);
+                            }
+                        })
+                        .catch(err => console.error('Autosave error', err));
+                }
 
-    // ========== Menu Filter Functionality ==========
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const menuCategories = document.querySelectorAll('.menu-category');
-
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-
-            // Update active button
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-
-            // Filter categories
-            if (category === 'all') {
-                menuCategories.forEach(cat => {
-                    cat.style.display = 'block';
+                [nameEl, notesEl].forEach(el => {
+                    if (!el) return;
+                    el.addEventListener('input', () => {
+                        clearTimeout(t);
+                        t = setTimeout(autosave, 600);
+                    });
+                    el.addEventListener('blur', () => {
+                        clearTimeout(t);
+                        autosave();
+                    });
                 });
-            } else {
-                menuCategories.forEach(cat => {
-                    if (cat.id === category) {
-                        cat.style.display = 'block';
+            }
+
+            // ========== Menu Filter Functionality ==========
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const menuCategories = document.querySelectorAll('.menu-category');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Filter categories
+                    if (category === 'all') {
+                        menuCategories.forEach(cat => {
+                            cat.style.display = 'block';
+                        });
                     } else {
-                        cat.style.display = 'none';
+                        menuCategories.forEach(cat => {
+                            if (cat.id === category) {
+                                cat.style.display = 'block';
+                            } else {
+                                cat.style.display = 'none';
+                            }
+                        });
                     }
                 });
-            }
-        });
-    });
-
-    // ========== Live Menu Search (AJAX) ==========
-    const searchForm = document.getElementById('menu-search-form');
-    const searchInput = document.getElementById('q');
-    const liveWrap = document.getElementById('live-search-results');
-    const liveGrid = document.getElementById('live-results-grid');
-    const liveEmpty = document.getElementById('live-results-empty');
-    const filterWrap = document.querySelector('.menu-filter');
-    const categoryBlocks = document.querySelectorAll('.menu-category');
-
-    function escapeHtml(s) {
-        if (!s) return '';
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-    function highlight(text, q) {
-        if (!q) return escapeHtml(text || '');
-        const safe = escapeHtml(text || '');
-        const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig');
-        return safe.replace(re, m => `<mark>${m}</mark>`);
-    }
-
-    async function performLiveSearch(q) {
-        if (!searchForm || !searchInput || !liveWrap || !liveGrid) return;
-        if (!q) {
-            // restore normal view
-            liveWrap.style.display = 'none';
-            if (filterWrap) filterWrap.style.display = '';
-            categoryBlocks.forEach(el => el.style.display = '');
-            return;
-        }
-        try {
-            const params = new URLSearchParams();
-            params.set('q', q);
-            params.set('ajax', '1');
-            const catSel = document.getElementById('category');
-            const minEl = document.getElementById('min_price');
-            const maxEl = document.getElementById('max_price');
-            if (catSel && catSel.value) params.set('category', catSel.value);
-            if (minEl && minEl.value) params.set('min_price', minEl.value);
-            if (maxEl && maxEl.value) params.set('max_price', maxEl.value);
-            const res = await fetch(`/menus?${params.toString()}`, {
-                headers: { 'Accept': 'application/json' }
             });
-            const data = await res.json();
-            const items = Array.isArray(data.results) ? data.results : [];
-            // show live section, hide categories
-            liveWrap.style.display = '';
-            if (filterWrap) filterWrap.style.display = 'none';
-            categoryBlocks.forEach(el => el.style.display = 'none');
-            liveGrid.innerHTML = '';
-            if (items.length === 0) {
-                liveEmpty.style.display = '';
-                return;
+
+            // ========== Live Menu Search (AJAX) ==========
+            const searchForm = document.getElementById('menu-search-form');
+            const searchInput = document.getElementById('q');
+            const liveWrap = document.getElementById('live-search-results');
+            const liveGrid = document.getElementById('live-results-grid');
+            const liveEmpty = document.getElementById('live-results-empty');
+            const filterWrap = document.querySelector('.menu-filter');
+            const categoryBlocks = document.querySelectorAll('.menu-category');
+
+            function escapeHtml(s) {
+                if (!s) return '';
+                return String(s)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
             }
-            liveEmpty.style.display = 'none';
-            const html = items.map(menu => `
+
+            function highlight(text, q) {
+                if (!q) return escapeHtml(text || '');
+                const safe = escapeHtml(text || '');
+                const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig');
+                return safe.replace(re, m => `<mark>${m}</mark>`);
+            }
+
+            async function performLiveSearch(q) {
+                if (!searchForm || !searchInput || !liveWrap || !liveGrid) return;
+                if (!q) {
+                    // restore normal view
+                    liveWrap.style.display = 'none';
+                    if (filterWrap) filterWrap.style.display = '';
+                    categoryBlocks.forEach(el => el.style.display = '');
+                    return;
+                }
+                try {
+                    const params = new URLSearchParams();
+                    params.set('q', q);
+                    params.set('ajax', '1');
+                    const catSel = document.getElementById('category');
+                    const minEl = document.getElementById('min_price');
+                    const maxEl = document.getElementById('max_price');
+                    if (catSel && catSel.value) params.set('category', catSel.value);
+                    if (minEl && minEl.value) params.set('min_price', minEl.value);
+                    if (maxEl && maxEl.value) params.set('max_price', maxEl.value);
+                    const res = await fetch(`/menus?${params.toString()}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const data = await res.json();
+                    const items = Array.isArray(data.results) ? data.results : [];
+                    // show live section, hide categories
+                    liveWrap.style.display = '';
+                    if (filterWrap) filterWrap.style.display = 'none';
+                    categoryBlocks.forEach(el => el.style.display = 'none');
+                    liveGrid.innerHTML = '';
+                    if (items.length === 0) {
+                        liveEmpty.style.display = '';
+                        return;
+                    }
+                    liveEmpty.style.display = 'none';
+                    const html = items.map(menu => `
                 <div class="menu-item" data-menu-id="${menu.id}" data-menu-name="${escapeHtml(menu.name)}"
                     data-menu-desc="${escapeHtml(menu.description || 'Menu favorit kami.')}"
                     data-menu-price="${menu.price}" data-menu-image="${menu.image_url || ''}">

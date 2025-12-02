@@ -7,10 +7,12 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\View\View;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -135,5 +137,58 @@ class AuthController extends Controller
             'Kasir' => route('kasir.dashboard'),
             default => route('menus'),
         };
+    }
+
+    // Google OAuth redirect
+    public function redirectToGoogle()
+    {
+        $redirectUri = config('services.google.redirect');
+        Log::debug('AuthController::redirectToGoogle - using redirect uri: ' . $redirectUri);
+
+        $driver = Socialite::driver('google');
+        /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
+
+        // Use the typed provider for static analysis and call chain safely
+        return $driver->redirectUrl($redirectUri)
+            ->stateless()
+            ->redirect();
+    }
+
+    // Google OAuth callback
+    public function handleGoogleCallback(Request $request): RedirectResponse
+    {
+        // Use stateless to avoid session issues when callback is from Google
+        Log::debug('AuthController::handleGoogleCallback - request url: ' . $request->fullUrl());
+
+        $driver = Socialite::driver('google');
+        /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
+        $googleUser = $driver->stateless()->user();
+
+        if (! $googleUser || ! $googleUser->getEmail()) {
+            return redirect()->route('login')->withErrors(['google' => 'Gagal mendapatkan informasi dari Google. Silakan coba lagi.']);
+        }
+
+        // Find or create user
+        $user = User::firstWhere('email', $googleUser->getEmail());
+
+        if (! $user) {
+            $customerRole = Role::where('name', 'Customer')->first();
+            $user = User::create([
+                'name' => $googleUser->getName() ?? $googleUser->getNickname() ?? $googleUser->getEmail(),
+                'email' => $googleUser->getEmail(),
+                'password' => Hash::make(str()->random(32)),
+                'role_id' => $customerRole?->id,
+                'google_id' => $googleUser->getId(),
+                'email_verified_at' => now(),
+            ]);
+        } else if (! $user->google_id) {
+            $user->google_id = $googleUser->getId();
+            $user->save();
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect($this->redirectByRole());
     }
 }

@@ -3,12 +3,17 @@
 @section('title', 'Cart - CafeIn')
 
 @section('content')
-    <div class="page-header">
+    <!-- Page Header -->
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>Your Cart</h1>
-            <p>Review and adjust your items before completing the order.</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Keranjang</span>
+                <h1>Pesanan <span class="text-accent">Anda</span></h1>
+                <p>Review dan atur kembali item sebelum melanjutkan pembayaran</p>
+            </div>
         </div>
-    </div>
+    </section>
 
     <section class="cart-section">
         <div class="container">
@@ -19,7 +24,11 @@
                             <article class="cart-item" data-cart-item-id="{{ $item['cart_item_id'] }}"
                                 data-unit-price="{{ $item['menu']->price }}" data-price="{{ $item['menu']->price }}">
                                 <div class="cart-item-thumb">
-                                    <span>{{ strtoupper(substr($item['menu']->name, 0, 1)) }}</span>
+                                    @if($item['menu']->image)
+                                        <img src="{{ asset('storage/'.$item['menu']->image) }}" alt="{{ $item['menu']->name }}">
+                                    @else
+                                        <span>{{ strtoupper(substr($item['menu']->name, 0, 1)) }}</span>
+                                    @endif
                                 </div>
                                 <div class="cart-item-body">
                                     <div class="cart-item-header">
@@ -72,7 +81,7 @@
                             <span class="summary-value" data-cart-grand>Rp
                                 {{ number_format($grandTotal, 0, ',', '.') }}</span>
                         </div>
-                        <button class="btn-primary checkout-btn" type="button">Proceed to Checkout</button>
+                        <button class="btn btn-primary checkout-btn" type="button">Proceed to Checkout</button>
                         <p class="summary-note">Selesaikan pembayaran di halaman Payments setelah memastikan data sudah
                             benar.</p>
                     </aside>
@@ -80,7 +89,7 @@
             @else
                 <div class="empty-cart">
                     <p>Your cart is empty.</p>
-                    <a href="{{ route('menus') }}" class="btn-primary">Browse Menu</a>
+                    <a href="{{ route('menus') }}" class="btn btn-primary">Browse Menu</a>
                 </div>
             @endif
         </div>

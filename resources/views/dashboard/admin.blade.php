@@ -1,46 +1,58 @@
 @extends('layouts.app')
 
-@section('title', 'Admin Console - CafeIn')
+@section('title', 'Dashboard Admin - CafeIn')
 
 @section('content')
-    <div class="page-header">
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>Admin Console</h1>
-            <p>Fokus pada pengelolaan pengguna, menu, dan pembayaran.</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Admin</span>
+                <h1>Dashboard Admin</h1>
+                <p>Ikhtisar operasional CafeIn dengan tampilan yang selaras dengan UI pengguna.</p>
+                <div class="page-actions">
+                    <a href="{{ route('orders') }}" class="btn btn-light btn-sm">Lihat Pesanan</a>
+                    <a href="{{ route('payments') }}" class="btn btn-primary btn-sm">Pantau Pembayaran</a>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
     <section class="dashboard-section">
         <div class="container">
-            <!-- Ringkas: Statistik Utama -->
             <div class="dashboard-grid">
                 <div class="stat-card">
                     <span class="stat-label">Total Revenue</span>
                     <span class="stat-value">Rp {{ number_format((float) $totalRevenue, 0, ',', '.') }}</span>
-                    <span class="stat-helper">Pembayaran sukses</span>
+                    <span class="stat-helper">Akumulasi pembayaran sukses</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Orders Today</span>
                     <span class="stat-value">{{ $ordersToday }}</span>
-                    <span class="stat-helper">Hari ini</span>
+                    <span class="stat-helper">Pesanan masuk hari ini</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Active Orders</span>
                     <span class="stat-value">{{ $pendingOrders }}</span>
-                    <span class="stat-helper">Pending / processing</span>
+                    <span class="stat-helper">Pending & processing</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">New Customers (7d)</span>
                     <span class="stat-value">{{ $newCustomers }}</span>
-                    <span class="stat-helper">Minggu ini</span>
+                    <span class="stat-helper">Registrasi baru minggu ini</span>
                 </div>
             </div>
 
-            <!-- Hub Manajemen -->
             <div class="dashboard-panel">
                 <div class="panel-header">
-                    <h2>Management Hub</h2>
-                    <span>Akses cepat fitur administrasi</span>
+                    <div>
+                        <h2>Pusat Kendali</h2>
+                        <span>Akses cepat dengan gaya kartu ala user</span>
+                    </div>
+                    <div class="page-actions">
+                        <a href="{{ route('admin.menus.create') }}" class="btn btn-primary btn-sm">Tambah Menu</a>
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-light btn-sm">Kelola Pengguna</a>
+                    </div>
                 </div>
 
                 <div class="dashboard-grid">
@@ -63,7 +75,7 @@
 
                     <div class="stat-card">
                         <span class="stat-label">Order Management</span>
-                        <span class="stat-helper">Pantau semua order</span>
+                        <span class="stat-helper">Pantau pesanan pelanggan</span>
                         <div class="page-actions">
                             <a href="{{ route('orders') }}" class="btn-secondary">Buka Orders</a>
                         </div>
@@ -79,11 +91,15 @@
                 </div>
             </div>
 
-            <!-- Ringkasan Order Terbaru -->
             <div class="dashboard-panel">
                 <div class="panel-header">
-                    <h2>Latest Orders</h2>
-                    <span>5 terbaru</span>
+                    <div>
+                        <h2>Latest Orders</h2>
+                        <span>Terhubung langsung dengan UI tracking pengguna</span>
+                    </div>
+                    <div class="page-actions">
+                        <a href="{{ route('orders') }}" class="btn btn-light btn-sm">Lihat semua</a>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table class="dashboard-table">
@@ -98,7 +114,7 @@
                         </thead>
                         <tbody>
                             @forelse ($recentOrders as $order)
-                                <tr onclick="window.location='{{ route('orders') }}'" style="cursor:pointer;">
+                                <tr onclick="window.location='{{ route('orders.track', $order) }}'" style="cursor:pointer;">
                                     <td>#{{ $order->order_number }}</td>
                                     <td>{{ $order->user?->name ?? 'Guest' }}</td>
                                     <td><span class="status-pill status-{{ $order->status }}">{{ ucfirst($order->status) }}</span></td>
@@ -107,7 +123,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="empty-state">No orders yet.</td>
+                                    <td colspan="5" class="empty-state">Belum ada order.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -6,6 +6,8 @@ use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -75,5 +77,45 @@ class OrderController extends Controller
             'order' => $order,
             'steps' => $steps,
         ]);
+    }
+
+    public function updateStatus(Request $request, Order $order): RedirectResponse
+    {
+        $user = Auth::user();
+        if (! in_array($user->role?->name, ['Admin', 'Kasir'], true)) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['processing', 'completed'])],
+        ]);
+
+        $targetStatus = $validated['status'];
+        $currentStatus = $order->status;
+
+        $allowed = match ($targetStatus) {
+            'processing' => in_array($currentStatus, ['paid'], true),
+            'completed' => in_array($currentStatus, ['processing', 'paid'], true),
+            default => false,
+        };
+
+        if (! $allowed) {
+            return redirect()
+                ->route('orders.show', $order)
+                ->with('error', 'Perubahan status tidak valid untuk pesanan ini.');
+        }
+
+        $order->update([
+            'status' => $targetStatus,
+        ]);
+
+        $labels = [
+            'processing' => 'Sedang Diproses',
+            'completed' => 'Selesai',
+        ];
+
+        return redirect()
+            ->route('orders.show', $order)
+            ->with('success', 'Status pesanan diperbarui menjadi: ' . ($labels[$targetStatus] ?? $targetStatus) . '.');
     }
 }

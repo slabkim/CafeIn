@@ -3,12 +3,17 @@
 @section('title', 'Payment - CafeIn')
 
 @section('content')
-    <div class="page-header">
+    <!-- Page Header -->
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>Payment</h1>
-            <p>Complete your order</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Pembayaran</span>
+                <h1>Lengkapi <span class="text-accent">Pembayaran</span></h1>
+                <p>Selesaikan pesanan dan pilih metode pembayaran favorit Anda</p>
+            </div>
         </div>
-    </div>
+    </section>
 
     <section class="payment-section">
         <div class="container">
@@ -121,14 +126,16 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Notes</label>
-                                        @if(in_array($role, ['Kasir','Admin']))
-                                            <div style="display:flex; gap:8px; align-items:center;">
-                                                <textarea rows="3" id="cf-notes" placeholder="Catatan untuk pesanan" style="flex:1;">{{ $order->metadata['notes'] ?? ($order->metadata['note'] ?? '') }}</textarea>
-                                                <small id="cf-notes-status" class="stat-helper" aria-live="polite"></small>
-                                            </div>
-                                        @else
-                                            <textarea rows="3" readonly>{{ $order->metadata['notes'] ?? ($order->metadata['note'] ?? '-') }}</textarea>
-                                        @endif
+                                        <div style="display:flex; gap:8px; align-items:center;">
+                                            <textarea
+                                                rows="3"
+                                                id="cf-notes"
+                                                placeholder="Catatan untuk pesanan (mis. less sugar, extra ice)"
+                                                style="flex:1;"
+                                                {{ $isPaymentCompleted ? 'readonly' : '' }}
+                                            >{{ $order->metadata['notes'] ?? ($order->metadata['note'] ?? '') }}</textarea>
+                                            <small id="cf-notes-status" class="stat-helper" aria-live="polite"></small>
+                                        </div>
                                     </div>
                                 </div>
                                 @if(in_array($role, ['Kasir','Admin']))
@@ -195,7 +202,7 @@
                                 <span class="total-amount">Rp {{ number_format($order->total_price, 0, ',', '.') }}</span>
                             </div>
 
-                            <button class="btn-payment" type="button" data-order-id="{{ $order->id }}" {{ $isPaymentCompleted ? 'disabled' : '' }}>
+                            <button class="btn-payment btn btn-primary" type="button" data-order-id="{{ $order->id }}" {{ $isPaymentCompleted ? 'disabled' : '' }}>
                                 {{ $isPaymentCompleted ? 'Payment Completed' : 'Complete Payment' }}
                             </button>
 
@@ -214,12 +221,16 @@
 @endsection
 
 @section('scripts')
+    {{-- Midtrans Snap JS (Sandbox/Production mengikuti config) --}}
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
+            data-client-key="{{ config('midtrans.client_key') }}"></script>
     @if($order)
         <script>
             window.CafeInPayment = {
                 orderId: {{ $order->id }},
                 completeUrl: @json(route('payments.complete')),
                 saveUrl: @json(route('payments.saveInfo')),
+                snapUrl: @json(route('payments.snapToken', ['order_id' => $order->id])),
             };
         </script>
     @endif

@@ -1,3 +1,25 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+    apiKey: "AIzaSyAEjWKDKLlOpGcP_pugwygaB5Hk-7sYRZ8",
+    authDomain: "cafein-419ea.firebaseapp.com",
+    projectId: "cafein-419ea",
+    storageBucket: "cafein-419ea.firebasestorage.app",
+    messagingSenderId: "911038080398",
+    appId: "1:911038080398:web:806d9d527473eb1d2630df",
+    measurementId: "G-MZ6X3NHWNE"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
 document.addEventListener('DOMContentLoaded', () => {
     function updateCartCount() {
         fetch('/cart/count')

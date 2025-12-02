@@ -19,24 +19,40 @@
                 <div class="auth-alert">{{ session('error') }}</div>
             @endif
 
-            <div class="page-actions actions-row mb-3">
-                <a href="{{ route('admin.users.create') }}" class="btn-primary">Tambah User</a>
+            <div class="search-card">
+                <div class="search-card-header">
+                    <div>
+                        <div class="search-card-title">Filter Pengguna</div>
+                        <div class="search-card-subtitle">Cari berdasarkan nama, email, dan role.</div>
+                    </div>
+                    <a href="{{ route('admin.users.create') }}" class="btn-primary">Tambah User</a>
+                </div>
 
-                <form id="user-filter-form" method="GET" action="{{ route('admin.users.index') }}" class="page-actions actions-row">
-                    <div class="form-group">
-                        <label for="q">Cari</label>
-                        <input type="text" id="q" name="q" value="{{ $filter['q'] ?? '' }}" placeholder="Nama atau Email">
+                <form id="user-filter-form" method="GET" action="{{ route('admin.users.index') }}">
+                    <div class="search-row">
+                        <div class="form-group search-main">
+                            <label for="q">Cari</label>
+                            <div class="search-input-wrap">
+                                <span class="search-input-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <circle cx="11" cy="11" r="6"></circle>
+                                        <line x1="16" y1="16" x2="21" y2="21"></line>
+                                    </svg>
+                                </span>
+                                <input type="text" id="q" name="q" value="{{ $filter['q'] ?? '' }}" placeholder="Nama atau Email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role</label>
+                            <select name="role" id="role">
+                                <option value="">Semua</option>
+                                @foreach ($roles as $role)
+                                    <option value="{{ $role->id }}" @selected(($filter['role'] ?? '') == $role->id)>{{ $role->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-secondary">Filter</button>
                     </div>
-                    <div class="form-group">
-                        <label for="role">Role</label>
-                        <select name="role" id="role">
-                            <option value="">Semua</option>
-                            @foreach ($roles as $role)
-                                <option value="{{ $role->id }}" @selected(($filter['role'] ?? '') == $role->id)>{{ $role->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-secondary">Filter</button>
                 </form>
             </div>
 

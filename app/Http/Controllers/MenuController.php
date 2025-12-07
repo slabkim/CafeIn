@@ -60,7 +60,7 @@ class MenuController extends Controller
                     'price' => (float) $menu->price,
                     'stock' => (int) $menu->stock,
                     'category' => $menu->category?->name,
-                    'image_url' => $menu->image ? asset('storage/'.$menu->image) : null,
+                    'image_url' => $menu->image ? Storage::url($menu->image) : null,
                 ];
             });
             return response()->json([
@@ -206,14 +206,16 @@ class MenuController extends Controller
             return back()->with('error', 'Menu tidak dapat dihapus karena sudah digunakan pada order. Nonaktifkan saja menu ini.');
         }
 
+        $disk = Storage::disk(config('filesystems.default'));
+
         // Delete cover image
-        if ($menu->image && Storage::disk('public')->exists($menu->image)) {
-            Storage::disk(config('filesystems.default'))->delete($menu->image);
+        if ($menu->image && $disk->exists($menu->image)) {
+            $disk->delete($menu->image);
         }
         // Delete gallery images
         foreach ($menu->images as $img) {
-            if ($img->path && Storage::disk(config('filesystems.default'))->exists($img->path)) {
-                Storage::disk(config('filesystems.default'))->delete($img->path);
+            if ($img->path && $disk->exists($img->path)) {
+                $disk->delete($img->path);
             }
         }
         $menu->delete();

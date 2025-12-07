@@ -29,6 +29,9 @@ WORKDIR /var/www/html
 # Copy Composer from official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# PHP config overrides (upload size, etc.)
+COPY api/php.ini /usr/local/etc/php/conf.d/custom.ini
+
 # Copy application code
 COPY . .
 

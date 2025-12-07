@@ -2,23 +2,26 @@ FROM php:8.2-apache
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-        git \
-        unzip \
-        libpq-dev \
-        libzip-dev \
-        libonig-dev \
-        libicu-dev \
+    git \
+    unzip \
+    libpq-dev \
+    libzip-dev \
+    libonig-dev \
+    libicu-dev \
     && docker-php-ext-install \
-        pdo \
-        pdo_pgsql \
-        pdo_mysql \
-        mbstring \
-        zip \
-        intl \
+    pdo \
+    pdo_pgsql \
+    pdo_mysql \
+    mbstring \
+    zip \
+    intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache modules
-RUN a2enmod rewrite
+RUN a2enmod rewrite \
+    && echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf \
+    && a2enconf servername
+
 
 # Set working directory
 WORKDIR /var/www/html

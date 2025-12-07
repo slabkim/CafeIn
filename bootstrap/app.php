@@ -15,6 +15,11 @@ $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );
 
+// Allow absolute Windows drive-letter paths (e.g., C:\tmp\cache.php) for cache env overrides.
+// Without this, Laravel treats them as relative and prepends base_path.
+$app->addAbsoluteCachePathPrefix('C:');
+$app->addAbsoluteCachePathPrefix('c:');
+
 /*
 |--------------------------------------------------------------------------
 | Bind Important Interfaces

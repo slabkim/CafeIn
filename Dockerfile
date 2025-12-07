@@ -29,8 +29,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copy application code
 COPY . .
 
+# Ensure cache/storage directories exist and are writable before Composer runs scripts
+RUN mkdir -p bootstrap/cache \
+    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views \
+    && chown -R www-data:www-data storage bootstrap/cache
+
 # Install PHP dependencies (assumes vendor is not committed)
-RUN composer install \
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction \
@@ -50,4 +55,3 @@ EXPOSE 80
 
 # Start Apache
 CMD ["apache2-foreground"]
-

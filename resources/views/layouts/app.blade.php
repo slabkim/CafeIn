@@ -7,7 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="user-logged-in" content="{{ auth()->check() ? 'true' : 'false' }}" />
     <title>@yield('title', 'CafeIn - Your Cozy Coffee Corner')</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
+    {{-- Force HTTPS for assets to avoid mixed-content when behind proxies --}}
+    <link rel="stylesheet" href="{{ secure_asset('css/app.css') }}" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
 </head>
@@ -150,7 +151,7 @@
         </div>
     </footer>
 
-    <script src="{{ asset('js/app.js') }}"></script>
+    <script src="{{ secure_asset('js/app.js') }}"></script>
     <script>
         function updateCartCount() {
             fetch('{{ route('cart.count') }}')

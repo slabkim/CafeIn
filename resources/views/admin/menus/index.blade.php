@@ -3,12 +3,16 @@
 @section('title', 'Kelola Menu - Admin')
 
 @section('content')
-    <div class="page-header">
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>Kelola Menu</h1>
-            <p>Daftar menu dengan pencarian dan filter kategori.</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Admin · Menu</span>
+                <h1>Kelola Menu</h1>
+                <p>Daftar menu dengan pencarian dan filter kategori.</p>
+            </div>
         </div>
-    </div>
+    </section>
 
     <section class="dashboard-section">
         <div class="container">

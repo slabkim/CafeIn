@@ -3,14 +3,18 @@
 @section('title', 'Edit Menu - CafeIn')
 
 @section('content')
-    <div class="page-header">
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>Edit Menu</h1>
-            <p>Perbarui informasi menu dan kelola galeri gambar.</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Admin · Menu</span>
+                <h1>Edit Menu</h1>
+                <p>Perbarui informasi menu dan kelola galeri gambar.</p>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <section class="form-section">
+    <section class="dashboard-section">
         <div class="container">
             @if (session('success'))
                 <div class="alert-success">{{ session('success') }}</div>

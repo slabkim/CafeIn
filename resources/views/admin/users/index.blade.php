@@ -3,12 +3,16 @@
 @section('title', 'User Management - Admin')
 
 @section('content')
-    <div class="page-header">
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>User Management</h1>
-            <p>Kelola pengguna dan perannya.</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Admin · Pengguna</span>
+                <h1>User Management</h1>
+                <p>Kelola pengguna dan perannya.</p>
+            </div>
         </div>
-    </div>
+    </section>
 
     <section class="dashboard-section">
         <div class="container">

@@ -3,12 +3,16 @@
 @section('title', 'Edit User Role - Admin')
 
 @section('content')
-    <div class="page-header">
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>Edit Role Pengguna</h1>
-            <p>Ubah peran untuk akses yang tepat.</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Admin · Pengguna</span>
+                <h1>Edit Role Pengguna</h1>
+                <p>Ubah peran untuk akses yang tepat.</p>
+            </div>
         </div>
-    </div>
+    </section>
 
     <section class="dashboard-section">
         <div class="container">

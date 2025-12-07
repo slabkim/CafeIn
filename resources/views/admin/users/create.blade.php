@@ -3,12 +3,16 @@
 @section('title', 'Create User - Admin')
 
 @section('content')
-    <div class="page-header">
+    <section class="page-hero compact">
+        <div class="page-hero-bg"></div>
         <div class="container">
-            <h1>Tambah Pengguna</h1>
-            <p>Buat akun baru dan pilih perannya.</p>
+            <div class="page-hero-content">
+                <span class="page-badge">Admin · Pengguna</span>
+                <h1>Tambah Pengguna</h1>
+                <p>Buat akun baru dan pilih perannya.</p>
+            </div>
         </div>
-    </div>
+    </section>
 
     <section class="dashboard-section">
         <div class="container">
@@ -66,4 +70,3 @@
         </div>
     </section>
 @endsection
-

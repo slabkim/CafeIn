@@ -1,11 +1,15 @@
 {
     "version": 2,
-    "builds": [{
-        "src": "public/index.php",
-        "use": "@vercel/php",
-        "config": { "phpIni": "api/php.ini" }
-    }],
+    "builds": [
+        { "src": "public/index.php", "use": "vercel-php" },
+        {
+            "src": "package.json",
+            "use": "@vercel/static-build",
+            "config": { "distDir": "public/build" }
+        }
+    ],
     "routes": [
+        { "src": "/build/(.*)", "dest": "/public/build/$1" },
         { "src": "/(.*)", "dest": "/public/index.php" }
     ]
 }

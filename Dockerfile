@@ -56,5 +56,10 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 # Expose HTTP port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start Apache, binding to provided PORT (Railway sets PORT)
+CMD ["/bin/sh", "-c", "\
+    : ${PORT:=80} && \
+    sed -i \"s/^Listen .*/Listen ${PORT}/\" /etc/apache2/ports.conf && \
+    sed -i \"s/<VirtualHost \\*:.*>/<VirtualHost *:${PORT}>/\" /etc/apache2/sites-available/000-default.conf && \
+    apache2-foreground \
+"]

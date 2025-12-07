@@ -28,9 +28,20 @@ return [
     |
     */
 
-    'compiled' => env(
-        'VIEW_COMPILED_PATH',
-        realpath(storage_path('framework/views'))
-    ),
+    // On immutable filesystems (e.g. Vercel), writing to storage/framework/views fails.
+    // Prefer storage if writable, otherwise fall back to a temp dir. Can be overridden via VIEW_COMPILED_PATH.
+    'compiled' => env('VIEW_COMPILED_PATH', (function () {
+        $default = storage_path('framework/views');
+
+        if (! is_dir($default) && is_writable(dirname($default))) {
+            @mkdir($default, 0755, true);
+        }
+
+        if (is_dir($default) && is_writable($default)) {
+            return $default;
+        }
+
+        return rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'blade';
+    })()),
 
 ];

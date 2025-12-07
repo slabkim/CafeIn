@@ -10,10 +10,12 @@
             <div class="hero-content">
                 <span class="hero-badge">Premium Coffee Experience</span>
                 <h1 class="hero-title">Rasakan Kopi <span class="text-accent">Terbaik</span> di CafeIn</h1>
-                <p class="hero-subtitle">Nikmati secangkir kopi berkualitas tinggi dengan suasana yang nyaman. Dari biji pilihan hingga penyajian sempurna.</p>
+                <p class="hero-subtitle">Nikmati secangkir kopi berkualitas tinggi dengan suasana yang nyaman. Dari biji
+                    pilihan hingga penyajian sempurna.</p>
                 <div class="hero-actions">
                     <a href="{{ route('menus') }}" class="btn btn-primary btn-lg">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M4 8h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8z"></path>
                             <path d="M16 10h2a3 3 0 0 1 0 6h-2"></path>
                         </svg>
@@ -41,12 +43,16 @@
             <div class="hero-visual">
                 <div class="hero-card">
                     <div class="hero-card-image">
-                        <img src="/placeholder.svg?height=400&width=350" alt="Coffee">
+                        <img src="{{ asset('images/hero.png') }}" alt="Coffee">
                     </div>
+
                     <div class="floating-card card-1">
                         <div class="floating-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                                </path>
                             </svg>
                         </div>
                         <div>
@@ -56,7 +62,8 @@
                     </div>
                     <div class="floating-card card-2">
                         <div class="floating-icon green">
-                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
                             </svg>
@@ -138,11 +145,11 @@
             <div class="popular-grid">
                 @forelse($popularMenus as $index => $menu)
                     <div class="popular-card {{ $index === 0 ? 'featured' : '' }}">
-                        @if($index === 0)
+                        @if ($index === 0)
                             <span class="popular-badge">Best Seller</span>
                         @endif
                         <div class="popular-image">
-                            @if($menu->image)
+                            @if ($menu->image)
                                 <img src="{{ Storage::url($menu->image) }}" alt="{{ $menu->name }}">
                             @else
                                 <img src="/placeholder.svg?height=200&width=300" alt="{{ $menu->name }}">
@@ -154,14 +161,17 @@
                             <p>{{ Str::limit($menu->description ?? 'Nikmati menu favorit pelanggan CafeIn.', 60) }}</p>
                             <div class="popular-footer">
                                 <span class="popular-price">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
-                                <button class="btn-cart btn-add" data-menu-id="{{ $menu->id }}" {{ $menu->stock < 1 ? 'disabled' : '' }}>
-                                    @if($menu->stock < 1)
+                                <button class="btn-cart btn-add" data-menu-id="{{ $menu->id }}"
+                                    {{ $menu->stock < 1 ? 'disabled' : '' }}>
+                                    @if ($menu->stock < 1)
                                         <span>Habis</span>
                                     @else
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+                                            stroke="currentColor" stroke-width="2">
                                             <circle cx="9" cy="21" r="1"></circle>
                                             <circle cx="20" cy="21" r="1"></circle>
-                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6">
+                                            </path>
                                         </svg>
                                         <span>Tambah</span>
                                     @endif
@@ -171,7 +181,8 @@
                     </div>
                 @empty
                     <div class="empty-state">
-                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
                             <path d="M4 8h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8z"></path>
                             <path d="M16 10h2a3 3 0 0 1 0 6h-2"></path>
                         </svg>
@@ -182,7 +193,8 @@
             <div class="section-action">
                 <a href="{{ route('menus') }}" class="btn btn-primary btn-lg">
                     Lihat Semua Menu
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
@@ -200,7 +212,8 @@
                     <p>Jelajahi menu lengkap kami dan temukan kopi favorit Anda hari ini!</p>
                     <div class="cta-actions">
                         <a href="{{ route('menus') }}" class="btn btn-light btn-lg">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <path d="M4 8h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8z"></path>
                                 <path d="M16 10h2a3 3 0 0 1 0 6h-2"></path>
                             </svg>

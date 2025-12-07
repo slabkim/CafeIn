@@ -18,7 +18,9 @@ return [
     |
     */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    // In serverless/immutable filesystems (e.g., Vercel), writing to storage/logs fails.
+    // Default to stderr in production if LOG_CHANNEL is not explicitly set.
+    'default' => env('LOG_CHANNEL', env('APP_ENV') === 'production' ? 'stderr' : 'stack'),
 
     /*
     |--------------------------------------------------------------------------

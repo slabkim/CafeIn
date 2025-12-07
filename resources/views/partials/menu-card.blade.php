@@ -1,13 +1,13 @@
 <div class="menu-card menu-item" data-category="{{ $slug ?? '' }}" data-menu-id="{{ $menu->id }}"
     data-menu-name="{{ $menu->name }}" data-menu-desc="{{ $menu->description ?? 'Menu favorit kami.' }}"
     data-menu-price="{{ (float) $menu->price }}"
-    data-menu-image="{{ $menu->image ? asset('storage/' . $menu->image) : '' }}" data-menu-stock="{{ $menu->stock }}"
+    data-menu-image="{{ $menu->image ? Storage::url($menu->image) : '' }}" data-menu-stock="{{ $menu->stock }}"
     data-menu-category="{{ $menu->category?->name }}" data-menu-meta-prep="{{ $menu->metadata['prep_time'] ?? '' }}"
     data-menu-meta-size="{{ $menu->metadata['serving_size'] ?? '' }}"
     data-menu-meta-cal="{{ $menu->metadata['calories'] ?? '' }}">
     <div class="menu-card-image">
         @if ($menu->image)
-            <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" loading="lazy">
+            <img src="{{ Storage::url($menu->image) }}" alt="{{ $menu->name }}" loading="lazy">
         @else
             <img src="/placeholder.svg?height=200&width=300" alt="{{ $menu->name }}" loading="lazy">
         @endif

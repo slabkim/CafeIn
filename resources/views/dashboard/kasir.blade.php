@@ -104,7 +104,7 @@
                                 <div class="kasir-menu-main">
                                     <div class="kasir-menu-thumb">
                                         @if ($menu->image)
-                                            <img src="{{ asset('storage/'.$menu->image) }}" alt="{{ $menu->name }}" class="thumb">
+                                            <img src="{{ Storage::url($menu->image) }}" alt="{{ $menu->name }}" class="thumb">
                                         @else
                                             <div class="thumb fallback">{{ strtoupper(substr($menu->name, 0, 1)) }}</div>
                                         @endif

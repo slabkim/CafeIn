@@ -65,7 +65,10 @@
                         <label for="image">Gambar Sampul</label>
                         @if ($menu->image)
                             <div class="mb-3">
-                                <img src="{{ asset('storage/'.$menu->image) }}" alt="{{ $menu->name }}" style="max-width: 280px; border-radius: 8px; display:block;">
+                            @php($coverUrl = $menu->image ? Storage::url($menu->image) : '')
+                            @if($coverUrl)
+                                <img src="{{ $coverUrl }}" alt="{{ $menu->name }}" style="max-width: 280px; border-radius: 8px; display:block;">
+                            @endif
                             </div>
                             <label class="checkbox">
                                 <input type="checkbox" name="remove_image" value="1"> Hapus gambar sampul
@@ -101,7 +104,7 @@
                     <div class="dashboard-grid">
                         @foreach ($menu->images as $img)
                             <div class="form-card" style="text-align:center;">
-                                <img src="{{ asset('storage/'.$img->path) }}" alt="{{ $menu->name }}" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;">
+                            <img src="{{ Storage::url($img->path) }}" alt="{{ $menu->name }}" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px;">
                                 <form action="{{ route('admin.menus.images.destroy', [$menu, $img]) }}" method="POST" class="mt-3" onsubmit="return confirm('Hapus gambar ini?');">
                                     @csrf
                                     @method('DELETE')

@@ -80,7 +80,9 @@
                             <tr>
                                 <td>
                                     @if ($menu->image)
-                                        <img src="{{ asset('storage/'.$menu->image) }}" alt="{{ $menu->name }}" class="thumb">
+                                        @if($menu->image)
+                                            <img src="{{ Storage::url($menu->image) }}" alt="{{ $menu->name }}" class="thumb">
+                                        @endif
                                     @else
                                         <div class="thumb fallback">{{ strtoupper(substr($menu->name, 0, 1)) }}</div>
                                     @endif

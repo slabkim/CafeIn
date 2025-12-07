@@ -143,7 +143,7 @@
                         @endif
                         <div class="popular-image">
                             @if($menu->image)
-                                <img src="{{ asset('storage/'.$menu->image) }}" alt="{{ $menu->name }}">
+                                <img src="{{ Storage::url($menu->image) }}" alt="{{ $menu->name }}">
                             @else
                                 <img src="/placeholder.svg?height=200&width=300" alt="{{ $menu->name }}">
                             @endif

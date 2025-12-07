@@ -25,7 +25,7 @@
                                 data-unit-price="{{ $item['menu']->price }}" data-price="{{ $item['menu']->price }}">
                                 <div class="cart-item-thumb">
                                     @if($item['menu']->image)
-                                        <img src="{{ asset('storage/'.$item['menu']->image) }}" alt="{{ $item['menu']->name }}">
+                                        <img src="{{ Storage::url($item['menu']->image) }}" alt="{{ $item['menu']->name }}">
                                     @else
                                         <span>{{ strtoupper(substr($item['menu']->name, 0, 1)) }}</span>
                                     @endif

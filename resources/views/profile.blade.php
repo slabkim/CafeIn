@@ -48,7 +48,7 @@
                         <div class="profile-avatar-wrap">
                             <div class="profile-avatar">
                                 @if(auth()->user()->avatar)
-                                    <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="{{ auth()->user()->name }}">
+                                    <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="{{ auth()->user()->name }}">
                                 @else
                                     <span>{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
                                 @endif

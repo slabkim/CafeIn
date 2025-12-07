@@ -19,7 +19,9 @@
         <div class="container">
             <!-- KIRI: Brand -->
             <div class="nav-brand">
-                <h1 style="margin:0;">CafeIn</h1>
+                <a href="{{ url('/') }}" style="text-decoration:none; color:inherit;">
+                    <h1 style="margin:0;">CafeIn</h1>
+                </a>
                 <span class="tagline">Your Cozy Coffee Corner</span>
             </div>
 

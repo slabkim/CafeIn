@@ -3575,13 +3575,13 @@ h6 {
    ======================================== */
 .page-hero {
   position: relative;
-  padding: 5rem 0 3rem;
+  padding: 3.5rem 0 2.5rem;
   text-align: center;
   overflow: hidden;
 }
 
 .page-hero.compact {
-  padding: 4rem 0 2rem;
+  padding: 3rem 0 2rem;
 }
 
 .page-hero-bg {
@@ -3618,6 +3618,42 @@ h6 {
 .page-hero-content p {
   color: rgba(255, 255, 255, 0.85);
   font-size: 1.0625rem;
+}
+
+@media (max-width: 480px) {
+  .page-hero {
+    padding: 2.5rem 0 1.75rem;
+  }
+
+  .page-hero.compact {
+    padding: 2.25rem 0 1.5rem;
+  }
+
+  .page-hero-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .page-hero-content p {
+    font-size: 0.95rem;
+  }
+
+  .section-title {
+    font-size: 1.35rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .features-section,
+  .popular-section,
+  .cta-section,
+  .orders-section-modern,
+  .cart-section,
+  .dashboard-section {
+    padding: 2rem 0;
+    margin: 1.5rem 0 2.5rem;
+  }
 }
 
 /* ========================================
@@ -4506,12 +4542,31 @@ h6 {
 @media (max-width: 480px) {
   .hero-section {
     min-height: auto;
-    padding: 3rem 0;
+    padding: 2rem 0;
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
   }
 
   .hero-stats {
-    flex-direction: column;
-    gap: 1rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem 1.5rem;
   }
 
   .stat-divider {
@@ -4539,7 +4594,7 @@ h6 {
     justify-content: space-between;
   }
 
-.qty-input {
+  .qty-input {
     flex: 1;
   }
 }

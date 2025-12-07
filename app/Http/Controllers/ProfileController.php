@@ -41,10 +41,12 @@ class ProfileController extends Controller
             'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
 
+        $disk = Storage::disk(config('filesystems.default'));
+
         if ($request->hasFile('avatar') && Schema::hasColumn('users', 'avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
-            if (!empty($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            $path = $request->file('avatar')->store('avatars', config('filesystems.default'));
+            if (!empty($user->avatar) && $disk->exists($user->avatar)) {
+                $disk->delete($user->avatar);
             }
             $user->avatar = $path;
         }
@@ -90,7 +92,7 @@ class ProfileController extends Controller
         Auth::logout();
 
         if (Schema::hasColumn('users', 'avatar') && !empty($user->avatar)) {
-            Storage::disk('public')->delete($user->avatar);
+            Storage::disk(config('filesystems.default'))->delete($user->avatar);
         }
 
         $user->delete();

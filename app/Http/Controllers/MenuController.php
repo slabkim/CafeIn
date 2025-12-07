@@ -131,9 +131,11 @@ class MenuController extends Controller
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
+        $disk = Storage::disk(config('filesystems.default'));
+
         // Handle image upload if present
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('menus', 'public');
+            $path = $request->file('image')->store('menus', config('filesystems.default'));
             $validated['image'] = $path;
         }
 
@@ -166,16 +168,18 @@ class MenuController extends Controller
             'images.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
+        $disk = Storage::disk(config('filesystems.default'));
+
         // Handle cover image replace/remove
-        if ($request->boolean('remove_image') && $menu->image && Storage::disk('public')->exists($menu->image)) {
-            Storage::disk('public')->delete($menu->image);
+        if ($request->boolean('remove_image') && $menu->image && $disk->exists($menu->image)) {
+            $disk->delete($menu->image);
             $validated['image'] = null;
         }
         if ($request->hasFile('image')) {
-            if ($menu->image && Storage::disk('public')->exists($menu->image)) {
-                Storage::disk('public')->delete($menu->image);
+            if ($menu->image && $disk->exists($menu->image)) {
+                $disk->delete($menu->image);
             }
-            $validated['image'] = $request->file('image')->store('menus', 'public');
+            $validated['image'] = $request->file('image')->store('menus', config('filesystems.default'));
         }
 
         $menu->update($validated);
@@ -184,7 +188,7 @@ class MenuController extends Controller
         if ($request->hasFile('images')) {
             foreach ((array) $request->file('images') as $file) {
                 if (! $file) continue;
-                $path = $file->store('menus/gallery', 'public');
+                $path = $file->store('menus/gallery', config('filesystems.default'));
                 MenuImage::create([
                     'menu_id' => $menu->id,
                     'path' => $path,
@@ -204,12 +208,12 @@ class MenuController extends Controller
 
         // Delete cover image
         if ($menu->image && Storage::disk('public')->exists($menu->image)) {
-            Storage::disk('public')->delete($menu->image);
+            Storage::disk(config('filesystems.default'))->delete($menu->image);
         }
         // Delete gallery images
         foreach ($menu->images as $img) {
-            if ($img->path && Storage::disk('public')->exists($img->path)) {
-                Storage::disk('public')->delete($img->path);
+            if ($img->path && Storage::disk(config('filesystems.default'))->exists($img->path)) {
+                Storage::disk(config('filesystems.default'))->delete($img->path);
             }
         }
         $menu->delete();
@@ -222,8 +226,8 @@ class MenuController extends Controller
         if ($image->menu_id !== $menu->id) {
             abort(404);
         }
-        if ($image->path && Storage::disk('public')->exists($image->path)) {
-            Storage::disk('public')->delete($image->path);
+        if ($image->path && Storage::disk(config('filesystems.default'))->exists($image->path)) {
+            Storage::disk(config('filesystems.default'))->delete($image->path);
         }
         $image->delete();
 

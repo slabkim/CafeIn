@@ -3840,6 +3840,21 @@ h6 {
   gap: 1.5rem;
 }
 
+@media (max-width: 480px) {
+  .menu-grid-modern {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .menu-card {
+    box-shadow: var(--shadow);
+  }
+
+  .menu-card-image img {
+    max-height: 140px;
+  }
+}
+
 .results-header {
   display: flex;
   align-items: center;
@@ -4570,10 +4585,6 @@ h6 {
   }
 
   .stat-divider {
-    display: none;
-  }
-
-  .floating-card {
     display: none;
   }
 

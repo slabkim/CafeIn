@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Illuminate\Support\Arr;
 
 class PaymentController extends Controller
 {
@@ -141,6 +142,89 @@ class PaymentController extends Controller
             'success' => true,
             'message' => 'Pembayaran berhasil dicatat.',
         ]);
+    }
+
+    public function midtransWebhook(Request $request): JsonResponse
+    {
+        $payload = $request->all();
+
+        $orderNumber = $payload['order_id'] ?? null;
+        $statusCode = $payload['status_code'] ?? null;
+        $grossAmount = $payload['gross_amount'] ?? null;
+        $signature = $payload['signature_key'] ?? null;
+        $transactionStatus = $payload['transaction_status'] ?? null;
+        $paymentType = $payload['payment_type'] ?? null;
+        $transactionId = $payload['transaction_id'] ?? null;
+
+        if (! $orderNumber || ! $statusCode || ! $grossAmount || ! $signature) {
+            return response()->json(['message' => 'Payload tidak lengkap.'], 400);
+        }
+
+        $expectedSignature = hash('sha512', $orderNumber . $statusCode . $grossAmount . config('midtrans.server_key'));
+        if (! hash_equals($expectedSignature, $signature)) {
+            return response()->json(['message' => 'Signature tidak valid.'], 403);
+        }
+
+        $order = Order::with('payments')->where('order_number', $orderNumber)->first();
+        if (! $order) {
+            return response()->json(['message' => 'Order tidak ditemukan.'], 404);
+        }
+
+        $isCancelled = in_array($transactionStatus, ['cancel', 'expire', 'failure', 'deny'], true);
+        $isPaid = in_array($transactionStatus, ['capture', 'settlement'], true);
+
+        DB::transaction(function () use ($order, $payload, $isCancelled, $isPaid, $transactionStatus, $paymentType, $transactionId) {
+            $meta = is_array($order->metadata) ? $order->metadata : [];
+            $meta['midtrans_status'] = $transactionStatus;
+            $meta['midtrans_payment_type'] = $paymentType;
+
+            $payment = $order->payments()
+                ->when($transactionId, fn ($q) => $q->where('transaction_id', $transactionId))
+                ->latest()
+                ->first();
+
+            if ($payment) {
+                $payment->update([
+                    'status' => $isPaid ? 'success' : ($isCancelled ? 'failed' : $payment->status),
+                    'provider' => $paymentType ? strtoupper($paymentType) : $payment->provider,
+                    'gateway_payload' => Arr::only($payload, [
+                        'transaction_status',
+                        'transaction_id',
+                        'order_id',
+                        'status_code',
+                        'payment_type',
+                        'gross_amount',
+                        'fraud_status',
+                        'signature_key',
+                    ]),
+                ]);
+            }
+
+            if ($isPaid && in_array($order->status, ['pending', 'processing'], true)) {
+                $order->update([
+                    'status' => 'paid',
+                    'paid_at' => $order->paid_at ?? now(),
+                    'metadata' => $meta,
+                ]);
+            } elseif ($isCancelled && ! in_array($order->status, ['completed', 'cancelled'], true)) {
+                foreach ($order->payments as $p) {
+                    if ($p->status === 'pending') {
+                        $p->update(['status' => 'failed']);
+                    }
+                }
+                $order->update([
+                    'status' => 'cancelled',
+                    'metadata' => $meta,
+                ]);
+            } else {
+                // update meta only
+                if ($meta !== $order->metadata) {
+                    $order->update(['metadata' => $meta]);
+                }
+            }
+        });
+
+        return response()->json(['message' => 'Notification processed.']);
     }
 
     public function cancel(Request $request): JsonResponse

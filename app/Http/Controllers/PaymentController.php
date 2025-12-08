@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Illuminate\Support\Arr;
@@ -333,6 +334,15 @@ class PaymentController extends Controller
         $user = $request->user();
         $role = $user->role?->name ?? null;
 
+        $serverKey = config('midtrans.server_key');
+        $clientKey = config('midtrans.client_key');
+        if (empty($serverKey) || empty($clientKey)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Konfigurasi Midtrans belum lengkap.',
+            ], 422);
+        }
+
         $orderId = (int) $request->query('order_id');
         if ($orderId <= 0) {
             return response()->json(['success' => false, 'message' => 'Order tidak ditemukan.'], 404);
@@ -346,7 +356,13 @@ class PaymentController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        $order = $query->firstOrFail();
+        $order = $query->first();
+        if (! $order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order tidak dapat diproses untuk Midtrans.',
+            ], 422);
+        }
 
         $this->initMidtrans();
 
@@ -361,7 +377,19 @@ class PaymentController extends Controller
             ],
         ];
 
-        $token = Snap::getSnapToken($params);
+        try {
+            $token = Snap::getSnapToken($params);
+        } catch (\Throwable $e) {
+            Log::error('Midtrans Snap token error', [
+                'order_id' => $orderId,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memulai pembayaran Midtrans.',
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,

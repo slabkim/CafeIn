@@ -404,7 +404,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         const method = selectedMethod.value;
 
                         // Alur Midtrans (Snap) untuk pembayaran online
-                        if (method === 'midtrans' && paymentConfig.snapUrl && typeof snap !== 'undefined') {
+                        if (method === 'midtrans') {
+                            if (!paymentConfig.snapUrl) {
+                                showNotification('Link pembayaran Midtrans tidak tersedia. Coba ulangi.', 'error');
+                                return;
+                            }
+                            if (typeof snap === 'undefined') {
+                                showNotification('Pembayaran Midtrans belum siap. Coba reload halaman.', 'error');
+                                return;
+                            }
+
                             paymentButton.disabled = true;
                             paymentButton.classList.add('is-loading');
 
@@ -506,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     paymentButton.classList.remove('is-loading');
                                 });
 
-                            return;
+                            return; // jangan lanjut ke alur manual
                         }
 
                         // Alur pembayaran internal (kasir/admin)

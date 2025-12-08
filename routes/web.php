@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/payments', PaymentController::class)->name('payments');
     Route::get('/payments/snap-token', [PaymentController::class, 'snapToken'])->name('payments.snapToken');
     Route::post('/payments/complete', [PaymentController::class, 'complete'])->name('payments.complete');
+    Route::post('/payments/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
     Route::post('/payments/save-info', [PaymentController::class, 'saveInfo'])->name('payments.saveInfo');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -143,6 +143,56 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function cancel(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'order_id' => ['required', 'integer', 'exists:orders,id'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $order = Order::with('payments')->findOrFail($validated['order_id']);
+
+        if ($user->role?->name !== 'Admin' && $user->role?->name !== 'Kasir' && $order->user_id !== $user->id) {
+            abort(403);
+        }
+
+        if ($order->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak dapat dibatalkan karena sudah diproses.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($order, $validated) {
+            $meta = is_array($order->metadata) ? $order->metadata : [];
+            $reason = array_key_exists('reason', $validated)
+                ? trim((string) $validated['reason'])
+                : null;
+
+            if ($reason !== '' && $reason !== null) {
+                $meta['cancel_reason'] = $reason;
+            }
+
+            foreach ($order->payments as $payment) {
+                if ($payment->status === 'pending') {
+                    $payment->update(['status' => 'failed']);
+                }
+            }
+
+            $order->update([
+                'status' => 'cancelled',
+                'metadata' => $meta,
+            ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pembayaran dibatalkan dan pesanan ditandai batal.',
+        ]);
+    }
+
     public function snapToken(Request $request): JsonResponse
     {
         $user = $request->user();

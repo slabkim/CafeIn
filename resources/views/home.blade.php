@@ -43,7 +43,7 @@
             <div class="hero-visual">
                 <div class="hero-card">
                     <div class="hero-card-image">
-                        <img src="{{ asset('images/hero.png') }}" alt="Coffee">
+                        <img src="{{ asset('images/Vanilla Caramel Lattes Recipe.png') }}" alt="Coffee">
                     </div>
 
                     <div class="floating-card card-1">

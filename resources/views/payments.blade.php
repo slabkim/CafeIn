@@ -243,6 +243,7 @@
                 orderId: {{ $order->id }},
                 completeUrl: @json(route('payments.complete')),
                 saveUrl: @json(route('payments.saveInfo')),
+                cancelUrl: @json(route('payments.cancel')),
                 snapUrl: @json(route('payments.snapToken', ['order_id' => $order->id])),
             };
         </script>

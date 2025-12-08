@@ -357,6 +357,40 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const paymentConfig = window.CafeInPayment || null;
+            const cancelPendingPayment = (reason) => {
+                if (!paymentConfig || !paymentConfig.cancelUrl || !paymentConfig.orderId) {
+                    return Promise.resolve(false);
+                }
+
+                const payload = {
+                    order_id: paymentConfig.orderId,
+                };
+                if (reason) {
+                    payload.reason = reason;
+                }
+
+                return fetch(paymentConfig.cancelUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.success) {
+                            showNotification(data.message || 'Pembayaran dibatalkan.', 'info');
+                            return true;
+                        }
+                        return false;
+                    })
+                    .catch(err => {
+                        console.error('Error cancelling pending payment', err);
+                        return false;
+                    });
+            };
             if (paymentConfig && paymentConfig.completeUrl) {
                 const paymentButton = document.querySelector('.btn-payment');
                 if (paymentButton) {
@@ -431,13 +465,31 @@ document.addEventListener('DOMContentLoaded', function() {
                                             paymentButton.classList.remove('is-loading');
                                         },
                                         onError: function () {
-                                            showNotification('Pembayaran melalui Midtrans gagal.', 'error');
-                                            paymentButton.disabled = false;
-                                            paymentButton.classList.remove('is-loading');
+                                            cancelPendingPayment('midtrans-error')
+                                                .then(cancelled => {
+                                                    showNotification('Pembayaran melalui Midtrans gagal.', 'error');
+                                                    if (cancelled) {
+                                                        setTimeout(() => window.location.reload(), 600);
+                                                    }
+                                                })
+                                                .finally(() => {
+                                                    paymentButton.disabled = false;
+                                                    paymentButton.classList.remove('is-loading');
+                                                });
                                         },
                                         onClose: function () {
-                                            paymentButton.disabled = false;
-                                            paymentButton.classList.remove('is-loading');
+                                            cancelPendingPayment('midtrans-cancelled')
+                                                .then(cancelled => {
+                                                    if (cancelled) {
+                                                        setTimeout(() => window.location.reload(), 600);
+                                                    } else {
+                                                        showNotification('Pembayaran dibatalkan.', 'info');
+                                                    }
+                                                })
+                                                .finally(() => {
+                                                    paymentButton.disabled = false;
+                                                    paymentButton.classList.remove('is-loading');
+                                                });
                                         },
                                     });
                                 })

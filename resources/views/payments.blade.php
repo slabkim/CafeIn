@@ -84,6 +84,14 @@
                                                         <circle cx="12" cy="12" r="3"></circle>
                                                     </svg>
                                                     @break
+                                                @case('midtrans')
+                                                    <svg viewBox="0 0 24 24">
+                                                        <rect x="3" y="5" width="18" height="14" rx="3"></rect>
+                                                        <path d="M7 9h10"></path>
+                                                        <path d="M7 13h4"></path>
+                                                        <circle cx="17" cy="13" r="1.25"></circle>
+                                                    </svg>
+                                                    @break
                                                 @default
                                                     <svg viewBox="0 0 24 24">
                                                         <circle cx="12" cy="12" r="8"></circle>
@@ -222,7 +230,12 @@
 
 @section('scripts')
     {{-- Midtrans Snap JS (Sandbox/Production mengikuti config) --}}
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
+    @php
+        $snapJsUrl = config('midtrans.is_production')
+            ? 'https://app.midtrans.com/snap/snap.js'
+            : 'https://app.sandbox.midtrans.com/snap/snap.js';
+    @endphp
+    <script src="{{ $snapJsUrl }}"
             data-client-key="{{ config('midtrans.client_key') }}"></script>
     @if($order)
         <script>
@@ -235,4 +248,3 @@
         </script>
     @endif
 @endsection
-

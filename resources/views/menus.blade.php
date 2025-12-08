@@ -28,7 +28,7 @@
                     </div>
                     <div>
                         <h3>Cari Menu Favorit</h3>
-                        <p>Filter berdasarkan nama, kategori, dan harga</p>
+                        <p>Masukkan nama atau deskripsi menu</p>
                     </div>
                     @if (auth()->check() && auth()->user()->role?->name === 'Admin')
                         <a href="{{ route('admin.menus.create') }}" class="btn btn-primary">
@@ -52,23 +52,6 @@
                                 <input type="text" id="q" name="q" value="{{ $searchTerm ?? '' }}" placeholder="Nama atau deskripsi menu...">
                             </div>
                         </div>
-                        <div class="search-input-group">
-                            <label for="category">Kategori</label>
-                            <select id="category" name="category">
-                                <option value="">Semua</option>
-                                @foreach ($categories as $category)
-                                    <option value="{{ $category->id }}" {{ (string)($selectedCategory ?? '') === (string)$category->id ? 'selected' : '' }}>{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="search-input-group">
-                            <label for="min_price">Min Harga</label>
-                            <input type="number" id="min_price" name="min_price" min="0" step="1000" value="{{ $minPrice ?? '' }}" placeholder="0">
-                        </div>
-                        <div class="search-input-group">
-                            <label for="max_price">Max Harga</label>
-                            <input type="number" id="max_price" name="max_price" min="0" step="1000" value="{{ $maxPrice ?? '' }}" placeholder="100000">
-                        </div>
                         <div class="search-actions">
                             <button type="submit" class="btn btn-primary">
                                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -77,7 +60,7 @@
                                 </svg>
                                 Cari
                             </button>
-                            @if (!empty($searchTerm) || !empty($selectedCategory) || !empty($minPrice) || !empty($maxPrice))
+                            @if (!empty($searchTerm))
                                 <a href="{{ route('menus') }}" class="btn btn-ghost">Reset</a>
                             @endif
                         </div>
@@ -236,4 +219,3 @@
         </div>
     </div>
 @endsection
-

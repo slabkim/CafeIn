@@ -252,19 +252,20 @@ class PaymentController extends Controller
 
     private function paymentMethods(?string $role = null): array
     {
+        $midtransMethod = [
+            'key' => 'midtrans',
+            'label' => 'Midtrans',
+            'description' => 'Bayar online (Snap: kartu, e-wallet, transfer)',
+        ];
+
         // Untuk customer, sediakan satu opsi pembayaran online via Midtrans (Snap)
         if ($role === 'Customer') {
-            return [
-                [
-                    'key' => 'midtrans',
-                    'label' => 'Pembayaran Online',
-                    'description' => 'Bayar dengan Midtrans (kartu, e-wallet, dll)',
-                ],
-            ];
+            return [$midtransMethod];
         }
 
-        // Untuk Kasir/Admin, gunakan metode manual internal
+        // Untuk Kasir/Admin, sediakan Midtrans + metode manual internal
         $methods = [
+            $midtransMethod,
             [
                 'key' => 'qris',
                 'label' => 'QRIS',
@@ -299,4 +300,3 @@ class PaymentController extends Controller
         return $methods;
     }
 }
-

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Payment;
 use Midtrans\Config as MidtransConfig;
 use Midtrans\Snap;
 use Illuminate\Http\JsonResponse;
@@ -83,6 +84,10 @@ class PaymentController extends Controller
             'method' => ['required', Rule::in($methods)],
             'customer_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'transaction_id' => ['nullable', 'string', 'max:191'],
+            'payment_type' => ['nullable', 'string', 'max:100'],
+            'transaction_status' => ['nullable', 'string', 'max:100'],
+            'gross_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $order = Order::with(['payments', 'user'])->findOrFail($validated['order_id']);
@@ -123,14 +128,34 @@ class PaymentController extends Controller
                 $order->update(['metadata' => $meta]);
             }
 
-            $order->payments()->create([
-                'method' => $validated['method'],
+            $transactionId = $validated['transaction_id'] ?? null;
+            $paymentType = $validated['payment_type'] ?? null;
+            $normalizedMethod = $this->normalizeMethod($validated['method'], $paymentType);
+
+            $payload = [
+                'method' => $normalizedMethod,
+                'transaction_id' => $transactionId,
                 'amount' => $order->total_price,
+                'fee' => 0,
                 'currency' => $order->currency ?? 'IDR',
                 'status' => 'success',
                 'paid_at' => now(),
-                'provider' => strtoupper($validated['method']),
-            ]);
+                'provider' => strtoupper($paymentType ?? $validated['method']),
+                'gateway_payload' => array_filter([
+                    'transaction_status' => $validated['transaction_status'] ?? null,
+                    'payment_type' => $paymentType,
+                    'gross_amount' => $validated['gross_amount'] ?? null,
+                ]),
+            ];
+
+            if ($transactionId) {
+                $order->payments()->updateOrCreate(
+                    ['transaction_id' => $transactionId],
+                    $payload,
+                );
+            } else {
+                $order->payments()->create($payload);
+            }
 
             $order->update([
                 'status' => 'paid',
@@ -178,26 +203,37 @@ class PaymentController extends Controller
             $meta['midtrans_status'] = $transactionStatus;
             $meta['midtrans_payment_type'] = $paymentType;
 
-            $payment = $order->payments()
-                ->when($transactionId, fn ($q) => $q->where('transaction_id', $transactionId))
-                ->latest()
-                ->first();
+            $payment = $transactionId
+                ? Payment::firstWhere('transaction_id', $transactionId)
+                : $order->payments()->latest()->first();
+            $normalizedMethod = $this->normalizeMethod('midtrans', $paymentType);
+
+            $paymentPayload = [
+                'order_id' => $order->id,
+                'method' => $normalizedMethod,
+                'transaction_id' => $transactionId,
+                'amount' => $order->total_price,
+                'fee' => $order->payments()->latest()->value('fee') ?? 0,
+                'currency' => $order->currency ?? 'IDR',
+                'status' => $isPaid ? 'success' : ($isCancelled ? 'failed' : 'pending'),
+                'paid_at' => $isPaid ? ($order->paid_at ?? now()) : null,
+                'provider' => $paymentType ? strtoupper($paymentType) : $payment?->provider,
+                'gateway_payload' => Arr::only($payload, [
+                    'transaction_status',
+                    'transaction_id',
+                    'order_id',
+                    'status_code',
+                    'payment_type',
+                    'gross_amount',
+                    'fraud_status',
+                    'signature_key',
+                ]),
+            ];
 
             if ($payment) {
-                $payment->update([
-                    'status' => $isPaid ? 'success' : ($isCancelled ? 'failed' : $payment->status),
-                    'provider' => $paymentType ? strtoupper($paymentType) : $payment->provider,
-                    'gateway_payload' => Arr::only($payload, [
-                        'transaction_status',
-                        'transaction_id',
-                        'order_id',
-                        'status_code',
-                        'payment_type',
-                        'gross_amount',
-                        'fraud_status',
-                        'signature_key',
-                    ]),
-                ]);
+                $payment->update($paymentPayload);
+            } else {
+                Payment::create($paymentPayload);
             }
 
             if ($isPaid && in_array($order->status, ['pending', 'processing'], true)) {
@@ -275,6 +311,21 @@ class PaymentController extends Controller
             'success' => true,
             'message' => 'Pembayaran dibatalkan dan pesanan ditandai batal.',
         ]);
+    }
+
+    private function normalizeMethod(string $selectedMethod, ?string $paymentType = null): string
+    {
+        if ($selectedMethod !== 'midtrans') {
+            return $selectedMethod;
+        }
+
+        return match ($paymentType) {
+            'qris' => 'qris',
+            'gopay' => 'gopay',
+            'ovo' => 'ovo',
+            'dana' => 'dana',
+            default => 'qris',
+        };
     }
 
     public function snapToken(Request $request): JsonResponse

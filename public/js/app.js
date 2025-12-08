@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         throw new Error(data.message || 'Gagal mendapatkan token pembayaran.');
                                     }
                                     snap.pay(data.token, {
-                                        onSuccess: function () {
+                                        onSuccess: function (result) {
                                             // Setelah Midtrans sukses, catat pembayaran di server
                                             fetch(paymentConfig.completeUrl, {
                                                 method: 'POST',
@@ -434,6 +434,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                                         order_id: paymentConfig.orderId,
                                                         method: method,
                                                     };
+                                                    if (result) {
+                                                        payload.transaction_id = result.transaction_id;
+                                                        payload.payment_type = result.payment_type;
+                                                        payload.transaction_status = result.transaction_status;
+                                                        payload.gross_amount = result.gross_amount;
+                                                    }
                                                     const nameEl = document.getElementById('cf-customer-name');
                                                     const notesEl = document.getElementById('cf-notes');
                                                     if (nameEl) payload.customer_name = nameEl.value.trim();

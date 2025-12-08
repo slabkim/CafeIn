@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         const method = selectedMethod.value;
 
-                        // Alur khusus Midtrans (Snap) untuk customer
+                        // Alur Midtrans (Snap) untuk pembayaran online
                         if (method === 'midtrans' && paymentConfig.snapUrl && typeof snap !== 'undefined') {
                             paymentButton.disabled = true;
                             paymentButton.classList.add('is-loading');
@@ -1009,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', function() {
             openMenuModal(data);
             return;
         }
-        if (e.target.matches('[data-close-modal]')) {
+        if (e.target.closest('[data-close-modal]')) {
             closeMenuModal();
         }
     });

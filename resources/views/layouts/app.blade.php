@@ -7,8 +7,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="user-logged-in" content="{{ auth()->check() ? 'true' : 'false' }}" />
     <title>@yield('title', 'CafeIn - Your Cozy Coffee Corner')</title>
-    {{-- Force HTTPS for assets to avoid mixed-content when behind proxies --}}
-    <link rel="stylesheet" href="{{ secure_asset('css/app.css') }}" />
+    @php
+    $localHosts = ['127.0.0.1', 'localhost'];
+    $hostIsLocal = in_array(request()->getHost(), $localHosts, true);
+    // Explicitly decide scheme for asset() to avoid HTTPS on local
+    $assetUseSecure = !$hostIsLocal;
+    @endphp
+    {{-- Use HTTPS when running behind TLS, fallback to HTTP for local hosts to avoid SSL errors --}}
+    <link rel="stylesheet" href="{{ asset('css/app.css', $assetUseSecure) }}" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
 </head>
@@ -153,7 +159,7 @@
         </div>
     </footer>
 
-    <script src="{{ secure_asset('js/app.js') }}"></script>
+    <script src="{{ asset('js/app.js', $assetUseSecure) }}"></script>
     <script>
         function updateCartCount() {
             fetch('{{ route('cart.count') }}')

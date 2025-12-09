@@ -61,6 +61,16 @@ class AdminDashboardController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status');
 
+        $user = auth()->user();
+        $initials = $this->getInitials($user?->name ?? 'Admin');
+        $adminNav = [
+            ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'pattern' => 'admin.dashboard', 'icon' => 'grid'],
+            ['label' => 'Kelola Menu', 'route' => 'admin.menus.index', 'pattern' => 'admin.menus.*', 'icon' => 'list'],
+            ['label' => 'Pengguna', 'route' => 'admin.users.index', 'pattern' => 'admin.users.*', 'icon' => 'users'],
+            ['label' => 'Orders', 'route' => 'orders', 'pattern' => 'orders*', 'icon' => 'clipboard'],
+            ['label' => 'Payments', 'route' => 'payments', 'pattern' => 'payments*', 'icon' => 'wallet'],
+        ];
+
         return view('dashboard.admin', [
             'totalRevenue' => $totalRevenue,
             'ordersToday' => $ordersToday,
@@ -70,6 +80,23 @@ class AdminDashboardController extends Controller
             'recentOrders' => $recentOrders,
             'paymentBreakdown' => $paymentBreakdown,
             'ordersByStatus' => $ordersByStatus,
+            'initials' => $initials,
+            'adminNav' => $adminNav,
+            'user' => $user,
         ]);
+    }
+
+    /**
+     * Get initials from a name string (up to 2 characters).
+     */
+    private function getInitials(string $name): string
+    {
+        $initials = collect(explode(' ', trim($name)))
+            ->filter()
+            ->map(fn ($part) => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($part, 0, 1)))
+            ->take(2)
+            ->implode('');
+
+        return $initials === '' ? 'AD' : $initials;
     }
 }

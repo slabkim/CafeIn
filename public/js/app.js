@@ -485,9 +485,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                             paymentButton.classList.remove('is-loading');
                                         },
                                         onClose: function () {
-                                            showNotification('Jendela pembayaran ditutup. Anda bisa melanjutkan pembayaran kapan saja.', 'info');
+                                            showNotification('Jendela pembayaran ditutup. Status tetap pending, silakan lanjutkan pembayaran nanti.', 'info');
                                             paymentButton.disabled = false;
                                             paymentButton.classList.remove('is-loading');
+                                            setTimeout(() => window.location.reload(), 400);
                                         },
                                     });
                                 })
@@ -542,6 +543,35 @@ document.addEventListener('DOMContentLoaded', function() {
                             .finally(() => {
                                 paymentButton.disabled = false;
                                 paymentButton.classList.remove('is-loading');
+                            });
+                    });
+                }
+            }
+
+            // Manual cancel payment (pending order)
+            if (paymentConfig && paymentConfig.cancelUrl) {
+                const cancelBtn = document.querySelector('.btn-cancel-payment');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        if (!confirm('Batalkan pembayaran dan tandai pesanan sebagai dibatalkan?')) {
+                            return;
+                        }
+                        cancelBtn.disabled = true;
+                        cancelBtn.classList.add('is-loading');
+                        cancelPendingPayment('user-cancel')
+                            .then((cancelled) => {
+                                if (cancelled) {
+                                    setTimeout(() => window.location.reload(), 400);
+                                } else {
+                                    showNotification('Tidak dapat membatalkan pembayaran.', 'error');
+                                    cancelBtn.disabled = false;
+                                    cancelBtn.classList.remove('is-loading');
+                                }
+                            })
+                            .catch(() => {
+                                showNotification('Tidak dapat membatalkan pembayaran.', 'error');
+                                cancelBtn.disabled = false;
+                                cancelBtn.classList.remove('is-loading');
                             });
                     });
                 }

@@ -279,7 +279,7 @@ class PaymentController extends Controller
             abort(403);
         }
 
-        if ($order->status !== 'pending') {
+        if (! in_array($order->status, ['pending', 'processing'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Pesanan tidak dapat dibatalkan karena sudah diproses.',

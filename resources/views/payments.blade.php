@@ -213,6 +213,11 @@
                             <button class="btn-payment btn btn-primary" type="button" data-order-id="{{ $order->id }}" {{ $isPaymentCompleted ? 'disabled' : '' }}>
                                 {{ $isPaymentCompleted ? 'Payment Completed' : 'Complete Payment' }}
                             </button>
+                            @if(!$isPaymentCompleted)
+                                <button class="btn btn-ghost btn-cancel-payment" type="button" data-order-id="{{ $order->id }}">
+                                    Batalkan Pembayaran
+                                </button>
+                            @endif
 
                             <div class="secure-payment">
                                 <span>🔒</span>

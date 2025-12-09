@@ -480,31 +480,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                             paymentButton.classList.remove('is-loading');
                                         },
                                         onError: function () {
-                                            cancelPendingPayment('midtrans-error')
-                                                .then(cancelled => {
-                                                    showNotification('Pembayaran melalui Midtrans gagal.', 'error');
-                                                    if (cancelled) {
-                                                        setTimeout(() => window.location.reload(), 600);
-                                                    }
-                                                })
-                                                .finally(() => {
-                                                    paymentButton.disabled = false;
-                                                    paymentButton.classList.remove('is-loading');
-                                                });
+                                            showNotification('Pembayaran melalui Midtrans gagal atau ditolak. Silakan coba lagi.', 'error');
+                                            paymentButton.disabled = false;
+                                            paymentButton.classList.remove('is-loading');
                                         },
                                         onClose: function () {
-                                            cancelPendingPayment('midtrans-cancelled')
-                                                .then(cancelled => {
-                                                    if (cancelled) {
-                                                        setTimeout(() => window.location.reload(), 600);
-                                                    } else {
-                                                        showNotification('Pembayaran dibatalkan.', 'info');
-                                                    }
-                                                })
-                                                .finally(() => {
-                                                    paymentButton.disabled = false;
-                                                    paymentButton.classList.remove('is-loading');
-                                                });
+                                            showNotification('Jendela pembayaran ditutup. Anda bisa melanjutkan pembayaran kapan saja.', 'info');
+                                            paymentButton.disabled = false;
+                                            paymentButton.classList.remove('is-loading');
                                         },
                                     });
                                 })

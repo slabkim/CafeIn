@@ -984,21 +984,49 @@ document.addEventListener('DOMContentLoaded', function() {
     forms.forEach(form => {
         const inputs = form.querySelectorAll('input, textarea');
         inputs.forEach(input => {
-            input.addEventListener('blur', function() {
-                if (this.hasAttribute('required') && this.value.trim() === '') {
-                    this.style.borderColor = '#EF4444';
-                } else {
-                    this.style.borderColor = '#E5E7EB';
+            let isDirty = false;
+            const wrapper = input.closest('.input-wrapper');
+            const toggleInvalid = (state) => {
+                input.classList.toggle('input-invalid', state);
+                if (wrapper) {
+                    wrapper.classList.toggle('input-invalid', state);
                 }
-            });
+                input.setAttribute('aria-invalid', state ? 'true' : 'false');
+            };
 
             input.addEventListener('input', function() {
-                if (this.style.borderColor === 'rgb(239, 68, 68)') {
-                    this.style.borderColor = '#E5E7EB';
-                }
+                isDirty = true;
+                const hasError = this.hasAttribute('required') && this.value.trim() === '';
+                toggleInvalid(hasError);
+            });
+
+            input.addEventListener('blur', function() {
+                if (!isDirty) return;
+                const hasError = this.hasAttribute('required') && this.value.trim() === '';
+                toggleInvalid(hasError);
             });
         });
     });
+
+    // ========== Admin Sidebar Toggle ==========
+    const adminShell = document.querySelector('[data-admin-shell]');
+    if (adminShell) {
+        const toggles = adminShell.querySelectorAll('[data-admin-toggle]');
+        const overlay = adminShell.querySelector('[data-admin-overlay]');
+        toggles.forEach(btn => {
+            btn.addEventListener('click', () => {
+                adminShell.classList.toggle('sidebar-open');
+            });
+        });
+        if (overlay) {
+            overlay.addEventListener('click', () => adminShell.classList.remove('sidebar-open'));
+        }
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 992) {
+                adminShell.classList.remove('sidebar-open');
+            }
+        });
+    }
 
     // ========== Initialize ==========
     console.log('CafeIn website loaded successfully! ☕');

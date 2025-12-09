@@ -190,15 +190,6 @@ CafeIn/
 
 ---
 
-## 👨‍💻 Author
-
-**Sulthon Abdul Hakim**
-Computer Science – Universitas Lampung
-
-GitHub: [https://github.com/slabkim](https://github.com/slabkim)
-
----
-
 ## 📄 License
 
 This project is developed for **academic and portfolio purposes**.

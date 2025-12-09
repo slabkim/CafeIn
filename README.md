@@ -1,66 +1,207 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ☕ CafeIn
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+### Web-Based Café Ordering & Management System
 
-## About Laravel
+![Laravel](https://img.shields.io/badge/Laravel-10.x-red)
+![PHP](https://img.shields.io/badge/PHP-8.x-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-316192)
+![Railway](https://img.shields.io/badge/Hosted%20on-Railway-purple)
+![Status](https://img.shields.io/badge/Status-Production-success)
+![License](https://img.shields.io/badge/License-Academic%20%26%20Portfolio-lightgrey)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+CafeIn is a **cloud-deployed web-based café ordering and management system** built to streamline customer ordering, cashier workflows, and administrative control in a single platform.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+🚀 **Live Production Website**
+🔗 **[https://cafein.up.railway.app](https://cafein.up.railway.app)**
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🌐 Hosting & Infrastructure
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+CafeIn is deployed using a **modern cloud-native architecture**:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+* **Hosting Platform:** Railway
+* **Database & Storage:** Supabase (PostgreSQL)
+* **Backend Framework:** Laravel (PHP)
 
-## Laravel Sponsors
+This infrastructure ensures scalability, clean separation of concerns, and production reliability.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🧱 System Architecture (Visual Diagram)
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 🔹 High-Level Architecture Flow
 
-## Contributing
+```
+┌───────────────┐
+│   Web Browser │
+│ (User/Admin)  │
+└───────┬───────┘
+        │ HTTP / HTTPS
+        ▼
+┌─────────────────────┐
+│   Laravel Backend   │
+│  (CafeIn Web App)   │
+│  - Auth             │
+│  - Roles            │
+│  - Business Logic   │
+└───────┬─────────────┘
+        │ Database Connection
+        ▼
+┌─────────────────────┐
+│ Supabase PostgreSQL │
+│  - Users            │
+│  - Orders           │
+│  - Menus            │
+│  - Transactions     │
+└─────────────────────┘
+        ▲
+        │ Managed Deployment
+┌───────┴─────────────┐
+│      Railway        │
+│  - Hosting          │
+│  - Build Pipeline   │
+│  - Environment Vars│
+└─────────────────────┘
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+### 🔹 Architecture Explanation
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Layer    | Description                                                              |
+| -------- | ------------------------------------------------------------------------ |
+| Client   | Web browser (Customer, Cashier, Admin)                                   |
+| Backend  | Laravel handles routing, authentication, role access, and business logic |
+| Database | Supabase PostgreSQL stores application data                              |
+| Hosting  | Railway manages deployment, builds, and runtime environment              |
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🎯 Project Objectives
 
-## License
+* Digitize café ordering workflows
+* Reduce cashier operational complexity
+* Centralize menu and user management
+* Deliver a clean and scalable web solution
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## ✨ Core Features
+
+### 👤 Customer
+
+* Register & login
+* Browse menu
+* Place online orders
+* Track order status
+
+### 💼 Cashier
+
+* View incoming orders
+* Update order status
+* Manage transactions
+
+### 🛠 Administrator
+
+* Menu management (CRUD)
+* User & role management
+* System monitoring
+
+---
+
+## 👥 User Roles
+
+| Role    | Access Level                   |
+| ------- | ------------------------------ |
+| Admin   | Full system control            |
+| Cashier | Order & transaction management |
+| User    | Menu browsing & ordering       |
+
+---
+
+## 🛠 Technology Stack
+
+* **Backend:** Laravel
+* **Language:** PHP 8.x
+* **Database:** PostgreSQL (Supabase)
+* **Hosting:** Railway
+* **Frontend:** Blade Template Engine
+* **Version Control:** Git & GitHub
+
+---
+
+## ⚙️ Environment Configuration
+
+```env
+APP_NAME=CafeIn
+APP_ENV=production
+APP_KEY=base64:YOUR_APP_KEY
+APP_DEBUG=false
+APP_URL=https://cafein.up.railway.app
+
+DB_CONNECTION=pgsql
+DB_HOST=YOUR_SUPABASE_HOST
+DB_PORT=5432
+DB_DATABASE=YOUR_DATABASE_NAME
+DB_USERNAME=YOUR_DATABASE_USER
+DB_PASSWORD=YOUR_DATABASE_PASSWORD
+```
+
+---
+
+## 📦 Local Development
+
+```bash
+git clone https://github.com/slabkim/CafeIn.git
+cd CafeIn
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+
+---
+
+## 📁 Project Structure
+
+```
+CafeIn/
+├── app/
+├── database/
+├── public/
+├── resources/
+├── routes/
+├── storage/
+└── README.md
+```
+
+---
+
+## 📈 Project Status
+
+✅ Production deployed
+✅ Cloud database integrated
+✅ Multi-role system implemented
+✅ Portfolio-ready
+
+---
+
+## 👨‍💻 Author
+
+**Sulthon Abdul Hakim**
+Computer Science – Universitas Lampung
+
+GitHub: [https://github.com/slabkim](https://github.com/slabkim)
+
+---
+
+## 📄 License
+
+This project is developed for **academic and portfolio purposes**.
+Forking is allowed with proper attribution.
+
+---
